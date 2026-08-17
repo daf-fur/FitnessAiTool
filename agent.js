@@ -15,3 +15,6 @@ async function lookupExercise(muscleGroup) {
     category: item.data.category,
   }));
 }
+
+const results = await lookupExercise('biceps');
+console.log(results);
