@@ -1,3 +1,5 @@
+import json
+
 import requests
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -8,6 +10,7 @@ client = OpenAI()
 
 WGER_BASE_URL = "https://wger.de/api/v2"
 ENGLISH_LANGUAGE_ID = 2
+MODEL = "gpt-4o-mini"
 
 
 def find_muscle_id(muscle_group):
@@ -43,6 +46,83 @@ def lookup_exercise(muscle_group):
     return results
 
 
+TOOLS = [
+    {
+        "type": "function",
+        "function": {
+            "name": "lookup_exercise",
+            "description": "Look up exercises that target a given muscle group (e.g. biceps, chest, quads).",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "muscle_group": {
+                        "type": "string",
+                        "description": "The muscle group to find exercises for.",
+                    },
+                },
+                "required": ["muscle_group"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "find_muscle_id",
+            "description": "Resolve a muscle group name (e.g. biceps, chest, quads) to its wger muscle ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "muscle_group": {
+                        "type": "string",
+                        "description": "The muscle group to resolve.",
+                    },
+                },
+                "required": ["muscle_group"],
+            },
+        },
+    },
+]
+
+AVAILABLE_FUNCTIONS = {
+    "lookup_exercise": lookup_exercise,
+    "find_muscle_id": find_muscle_id,
+}
+
+
+def run_agent(user_message):
+    messages = [
+        {
+            "role": "system",
+            "content": (
+                "You are a fitness assistant. Use the lookup_exercise tool to find "
+                "real exercises before recommending a workout."
+            ),
+        },
+        {"role": "user", "content": user_message},
+    ]
+
+    response = client.chat.completions.create(model=MODEL, messages=messages, tools=TOOLS)
+    message = response.choices[0].message
+
+    while message.tool_calls:
+        messages.append(message)
+        for tool_call in message.tool_calls:
+            function = AVAILABLE_FUNCTIONS[tool_call.function.name]
+            arguments = json.loads(tool_call.function.arguments)
+            result = function(**arguments)
+            messages.append(
+                {
+                    "role": "tool",
+                    "tool_call_id": tool_call.id,
+                    "content": json.dumps(result),
+                }
+            )
+
+        response = client.chat.completions.create(model=MODEL, messages=messages, tools=TOOLS)
+        message = response.choices[0].message
+
+    return message.content
+
+
 if __name__ == "__main__":
-    results = lookup_exercise("biceps")
-    print(results)
+    print(run_agent("Give me three exercises for biceps."))
