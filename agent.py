@@ -29,12 +29,37 @@ def find_muscle_id(muscle_group):
     return None
 
 
-def lookup_exercise(muscle_group):
+def find_equipment_id(equipment):
+    try:
+        response = requests.get(f"{WGER_BASE_URL}/equipment/?format=json&limit=20", timeout=10)
+        response.raise_for_status()
+    except requests.RequestException as error:
+        return {"error": f"Failed to look up equipment: {error}"}
+    data = response.json()
+
+    equipment = equipment.lower()
+    for item in data["results"]:
+        if equipment in item["name"].lower():
+            return item["id"]
+
+    return None
+
+
+def lookup_exercise(muscle_group, equipment=None, limit=5):
     muscle_id = find_muscle_id(muscle_group)
     if not isinstance(muscle_id, int):
         return muscle_id if isinstance(muscle_id, dict) else []
 
-    url = f"{WGER_BASE_URL}/exerciseinfo/?format=json&muscles={muscle_id}&limit=5"
+    url = f"{WGER_BASE_URL}/exerciseinfo/?format=json&muscles={muscle_id}&limit={limit}"
+
+    if equipment:
+        equipment_id = find_equipment_id(equipment)
+        if isinstance(equipment_id, dict):
+            return equipment_id
+        if equipment_id is None:
+            return {"error": f"Unknown equipment: {equipment}"}
+        url += f"&equipment={equipment_id}"
+
     try:
         response = requests.get(url, timeout=10)
         response.raise_for_status()
@@ -52,20 +77,21 @@ def lookup_exercise(muscle_group):
     return results
 
 
-def build_workout_plan(muscle_groups, exercises_per_muscle=3):
+def build_workout_plan(muscle_groups, exercises_per_muscle=3, equipment=None):
     plan = []
+    used_names = set()
+
     for muscle_group in muscle_groups:
-        exercises = lookup_exercise(muscle_group)
+        exercises = lookup_exercise(muscle_group, equipment=equipment, limit=exercises_per_muscle + 5)
         if isinstance(exercises, dict):
             plan.append({"muscle_group": muscle_group, "error": exercises["error"]})
             continue
 
-        plan.append(
-            {
-                "muscle_group": muscle_group,
-                "exercises": exercises[:exercises_per_muscle],
-            }
-        )
+        unique_exercises = [e for e in exercises if e["name"] not in used_names]
+        selected = unique_exercises[:exercises_per_muscle]
+        used_names.update(e["name"] for e in selected)
+
+        plan.append({"muscle_group": muscle_group, "exercises": selected})
 
     return plan
 
@@ -82,6 +108,13 @@ TOOLS = [
                     "muscle_group": {
                         "type": "string",
                         "description": "The muscle group to find exercises for.",
+                    },
+                    "equipment": {
+                        "type": "string",
+                        "description": (
+                            "Optional equipment filter (e.g. dumbbell, barbell, "
+                            "resistance band, or 'bodyweight' for no equipment)."
+                        ),
                     },
                 },
                 "required": ["muscle_group"],
@@ -108,10 +141,29 @@ TOOLS = [
     {
         "type": "function",
         "function": {
+            "name": "find_equipment_id",
+            "description": "Resolve an equipment name (e.g. dumbbell, barbell, bodyweight) to its wger equipment ID.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "equipment": {
+                        "type": "string",
+                        "description": "The equipment name to resolve.",
+                    },
+                },
+                "required": ["equipment"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
             "name": "build_workout_plan",
             "description": (
                 "Build a full workout plan by looking up exercises for multiple "
-                "muscle groups at once (e.g. a push day: chest, shoulders, triceps)."
+                "muscle groups at once (e.g. a push day: chest, shoulders, triceps). "
+                "Exercises are deduplicated across the whole plan so the same "
+                "exercise isn't repeated under different muscle groups."
             ),
             "parameters": {
                 "type": "object",
@@ -125,6 +177,13 @@ TOOLS = [
                         "type": "integer",
                         "description": "How many exercises to include per muscle group (default 3).",
                     },
+                    "equipment": {
+                        "type": "string",
+                        "description": (
+                            "Optional equipment filter applied to every muscle group "
+                            "(e.g. dumbbell, barbell, or 'bodyweight' for no equipment)."
+                        ),
+                    },
                 },
                 "required": ["muscle_groups"],
             },
@@ -135,13 +194,16 @@ TOOLS = [
 AVAILABLE_FUNCTIONS = {
     "lookup_exercise": lookup_exercise,
     "find_muscle_id": find_muscle_id,
+    "find_equipment_id": find_equipment_id,
     "build_workout_plan": build_workout_plan,
 }
 
 SYSTEM_PROMPT = (
     "You are a fitness assistant. Use lookup_exercise for a single muscle group, "
     "or build_workout_plan when the user wants a full workout covering multiple "
-    "muscle groups. Always ground recommendations in real tool results."
+    "muscle groups. Both tools accept an optional equipment filter if the user "
+    "mentions available equipment or wants a bodyweight-only workout. Always "
+    "ground recommendations in real tool results."
 )
 
 MAX_TOOL_ITERATIONS = 5
