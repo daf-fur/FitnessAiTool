@@ -14,8 +14,11 @@ MODEL = "gpt-4o-mini"
 
 
 def find_muscle_id(muscle_group):
-    response = requests.get(f"{WGER_BASE_URL}/muscle/?format=json&limit=50")
-    response.raise_for_status()
+    try:
+        response = requests.get(f"{WGER_BASE_URL}/muscle/?format=json&limit=50", timeout=10)
+        response.raise_for_status()
+    except requests.RequestException as error:
+        return {"error": f"Failed to look up muscle groups: {error}"}
     data = response.json()
 
     muscle_group = muscle_group.lower()
@@ -28,12 +31,15 @@ def find_muscle_id(muscle_group):
 
 def lookup_exercise(muscle_group):
     muscle_id = find_muscle_id(muscle_group)
-    if muscle_id is None:
-        return []
+    if not isinstance(muscle_id, int):
+        return muscle_id if isinstance(muscle_id, dict) else []
 
     url = f"{WGER_BASE_URL}/exerciseinfo/?format=json&muscles={muscle_id}&limit=5"
-    response = requests.get(url)
-    response.raise_for_status()
+    try:
+        response = requests.get(url, timeout=10)
+        response.raise_for_status()
+    except requests.RequestException as error:
+        return {"error": f"Failed to look up exercises: {error}"}
     data = response.json()
 
     results = []
@@ -44,6 +50,24 @@ def lookup_exercise(muscle_group):
         results.append({"name": name, "category": exercise["category"]["name"]})
 
     return results
+
+
+def build_workout_plan(muscle_groups, exercises_per_muscle=3):
+    plan = []
+    for muscle_group in muscle_groups:
+        exercises = lookup_exercise(muscle_group)
+        if isinstance(exercises, dict):
+            plan.append({"muscle_group": muscle_group, "error": exercises["error"]})
+            continue
+
+        plan.append(
+            {
+                "muscle_group": muscle_group,
+                "exercises": exercises[:exercises_per_muscle],
+            }
+        )
+
+    return plan
 
 
 TOOLS = [
@@ -81,30 +105,54 @@ TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "build_workout_plan",
+            "description": (
+                "Build a full workout plan by looking up exercises for multiple "
+                "muscle groups at once (e.g. a push day: chest, shoulders, triceps)."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "muscle_groups": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": "The muscle groups to include in the plan.",
+                    },
+                    "exercises_per_muscle": {
+                        "type": "integer",
+                        "description": "How many exercises to include per muscle group (default 3).",
+                    },
+                },
+                "required": ["muscle_groups"],
+            },
+        },
+    },
 ]
 
 AVAILABLE_FUNCTIONS = {
     "lookup_exercise": lookup_exercise,
     "find_muscle_id": find_muscle_id,
+    "build_workout_plan": build_workout_plan,
 }
 
+SYSTEM_PROMPT = (
+    "You are a fitness assistant. Use lookup_exercise for a single muscle group, "
+    "or build_workout_plan when the user wants a full workout covering multiple "
+    "muscle groups. Always ground recommendations in real tool results."
+)
 
-def run_agent(user_message):
-    messages = [
-        {
-            "role": "system",
-            "content": (
-                "You are a fitness assistant. Use the lookup_exercise tool to find "
-                "real exercises before recommending a workout."
-            ),
-        },
-        {"role": "user", "content": user_message},
-    ]
+MAX_TOOL_ITERATIONS = 5
 
+
+def run_turn(messages):
     response = client.chat.completions.create(model=MODEL, messages=messages, tools=TOOLS)
     message = response.choices[0].message
 
-    while message.tool_calls:
+    iterations = 0
+    while message.tool_calls and iterations < MAX_TOOL_ITERATIONS:
         messages.append(message)
         for tool_call in message.tool_calls:
             function = AVAILABLE_FUNCTIONS[tool_call.function.name]
@@ -120,9 +168,46 @@ def run_agent(user_message):
 
         response = client.chat.completions.create(model=MODEL, messages=messages, tools=TOOLS)
         message = response.choices[0].message
+        iterations += 1
 
+    messages.append(message)
     return message.content
 
 
+def run_agent(user_message):
+    messages = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user", "content": user_message},
+    ]
+    return run_turn(messages)
+
+
+def chat():
+    messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    print("Fitness agent ready. Type 'exit' or 'quit' to stop.")
+
+    while True:
+        try:
+            user_message = input("> ").strip()
+        except (EOFError, KeyboardInterrupt):
+            print()
+            break
+
+        if not user_message:
+            continue
+        if user_message.lower() in {"exit", "quit"}:
+            break
+
+        messages.append({"role": "user", "content": user_message})
+        try:
+            reply = run_turn(messages)
+        except Exception as error:
+            print(f"Error: {error}")
+            messages.pop()
+            continue
+
+        print(reply)
+
+
 if __name__ == "__main__":
-    print(run_agent("Give me three exercises for biceps."))
+    chat()
