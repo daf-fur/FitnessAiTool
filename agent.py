@@ -1,4 +1,5 @@
 import json
+from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
@@ -12,17 +13,43 @@ WGER_BASE_URL = "https://wger.de/api/v2"
 ENGLISH_LANGUAGE_ID = 2
 MODEL = "gpt-4o-mini"
 
+_muscle_cache = None
+_equipment_cache = None
+
+
+def _get_muscles():
+    global _muscle_cache
+    if _muscle_cache is None:
+        try:
+            response = requests.get(f"{WGER_BASE_URL}/muscle/?format=json&limit=50", timeout=10)
+            response.raise_for_status()
+        except requests.RequestException as error:
+            return {"error": f"Failed to look up muscle groups: {error}"}
+        _muscle_cache = response.json()["results"]
+
+    return _muscle_cache
+
+
+def _get_equipment():
+    global _equipment_cache
+    if _equipment_cache is None:
+        try:
+            response = requests.get(f"{WGER_BASE_URL}/equipment/?format=json&limit=20", timeout=10)
+            response.raise_for_status()
+        except requests.RequestException as error:
+            return {"error": f"Failed to look up equipment: {error}"}
+        _equipment_cache = response.json()["results"]
+
+    return _equipment_cache
+
 
 def find_muscle_id(muscle_group):
-    try:
-        response = requests.get(f"{WGER_BASE_URL}/muscle/?format=json&limit=50", timeout=10)
-        response.raise_for_status()
-    except requests.RequestException as error:
-        return {"error": f"Failed to look up muscle groups: {error}"}
-    data = response.json()
+    muscles = _get_muscles()
+    if isinstance(muscles, dict):
+        return muscles
 
     muscle_group = muscle_group.lower()
-    for muscle in data["results"]:
+    for muscle in muscles:
         if muscle_group in muscle["name"].lower() or muscle_group in muscle["name_en"].lower():
             return muscle["id"]
 
@@ -30,15 +57,12 @@ def find_muscle_id(muscle_group):
 
 
 def find_equipment_id(equipment):
-    try:
-        response = requests.get(f"{WGER_BASE_URL}/equipment/?format=json&limit=20", timeout=10)
-        response.raise_for_status()
-    except requests.RequestException as error:
-        return {"error": f"Failed to look up equipment: {error}"}
-    data = response.json()
+    equipment_list = _get_equipment()
+    if isinstance(equipment_list, dict):
+        return equipment_list
 
     equipment = equipment.lower()
-    for item in data["results"]:
+    for item in equipment_list:
         if equipment in item["name"].lower():
             return item["id"]
 
@@ -77,7 +101,21 @@ def lookup_exercise(muscle_group, equipment=None, limit=5):
     return results
 
 
-def build_workout_plan(muscle_groups, exercises_per_muscle=3, equipment=None):
+def _plan_to_markdown(plan):
+    lines = ["# Workout Plan", ""]
+    for entry in plan:
+        lines.append(f"## {entry['muscle_group'].title()}")
+        if "error" in entry:
+            lines.append(f"- Error: {entry['error']}")
+        else:
+            for i, exercise in enumerate(entry["exercises"], 1):
+                lines.append(f"{i}. **{exercise['name']}** ({exercise['category']})")
+        lines.append("")
+
+    return "\n".join(lines)
+
+
+def build_workout_plan(muscle_groups, exercises_per_muscle=3, equipment=None, save_to=None):
     plan = []
     used_names = set()
 
@@ -93,7 +131,18 @@ def build_workout_plan(muscle_groups, exercises_per_muscle=3, equipment=None):
 
         plan.append({"muscle_group": muscle_group, "exercises": selected})
 
-    return plan
+    if not save_to:
+        return plan
+
+    path = Path(save_to)
+    content = _plan_to_markdown(plan) if path.suffix.lower() == ".md" else json.dumps(plan, indent=2)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    except OSError as error:
+        return {"plan": plan, "save_error": f"Failed to save plan to {save_to}: {error}"}
+
+    return {"plan": plan, "saved_to": str(path)}
 
 
 TOOLS = [
@@ -184,6 +233,14 @@ TOOLS = [
                             "(e.g. dumbbell, barbell, or 'bodyweight' for no equipment)."
                         ),
                     },
+                    "save_to": {
+                        "type": "string",
+                        "description": (
+                            "Optional file path to save the plan to, if the user asks to "
+                            "save or export it. Use a '.md' extension for a readable "
+                            "markdown file, any other extension (e.g. '.json') for JSON."
+                        ),
+                    },
                 },
                 "required": ["muscle_groups"],
             },
@@ -202,8 +259,9 @@ SYSTEM_PROMPT = (
     "You are a fitness assistant. Use lookup_exercise for a single muscle group, "
     "or build_workout_plan when the user wants a full workout covering multiple "
     "muscle groups. Both tools accept an optional equipment filter if the user "
-    "mentions available equipment or wants a bodyweight-only workout. Always "
-    "ground recommendations in real tool results."
+    "mentions available equipment or wants a bodyweight-only workout. If the user "
+    "asks to save or export a plan, call build_workout_plan again with a save_to "
+    "file path. Always ground recommendations in real tool results."
 )
 
 MAX_TOOL_ITERATIONS = 5
