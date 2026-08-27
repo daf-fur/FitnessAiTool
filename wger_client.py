@@ -6,6 +6,13 @@ import requests
 WGER_BASE_URL = "https://wger.de/api/v2"
 ENGLISH_LANGUAGE_ID = 2
 
+REP_SCHEMES = {
+    "strength": {"sets": 5, "reps": "5", "rest_seconds": 180},
+    "hypertrophy": {"sets": 3, "reps": "8-12", "rest_seconds": 90},
+    "endurance": {"sets": 3, "reps": "15-20", "rest_seconds": 45},
+}
+DEFAULT_GOAL = "hypertrophy"
+
 _muscle_cache = None
 _equipment_cache = None
 
@@ -102,13 +109,19 @@ def _plan_to_markdown(plan):
             lines.append(f"- Error: {entry['error']}")
         else:
             for i, exercise in enumerate(entry["exercises"], 1):
-                lines.append(f"{i}. **{exercise['name']}** ({exercise['category']})")
+                lines.append(
+                    f"{i}. **{exercise['name']}** ({exercise['category']}) — "
+                    f"{exercise['sets']} sets x {exercise['reps']} reps, "
+                    f"rest {exercise['rest_seconds']}s"
+                )
         lines.append("")
 
     return "\n".join(lines)
 
 
-def build_workout_plan(muscle_groups, exercises_per_muscle=3, equipment=None, save_to=None):
+def build_workout_plan(muscle_groups, exercises_per_muscle=3, equipment=None, goal=None, save_to=None):
+    scheme = REP_SCHEMES.get(goal, REP_SCHEMES[DEFAULT_GOAL])
+
     plan = []
     used_names = set()
 
@@ -121,6 +134,8 @@ def build_workout_plan(muscle_groups, exercises_per_muscle=3, equipment=None, sa
         unique_exercises = [e for e in exercises if e["name"] not in used_names]
         selected = unique_exercises[:exercises_per_muscle]
         used_names.update(e["name"] for e in selected)
+        for exercise in selected:
+            exercise.update(scheme)
 
         plan.append({"muscle_group": muscle_group, "exercises": selected})
 

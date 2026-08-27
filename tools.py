@@ -88,6 +88,14 @@ TOOLS = [
                             "(e.g. dumbbell, barbell, or 'bodyweight' for no equipment)."
                         ),
                     },
+                    "goal": {
+                        "type": "string",
+                        "enum": ["strength", "hypertrophy", "endurance"],
+                        "description": (
+                            "Training goal, which sets the sets/reps/rest scheme for every "
+                            "exercise in the plan. Defaults to hypertrophy if not specified."
+                        ),
+                    },
                     "save_to": {
                         "type": "string",
                         "description": (
