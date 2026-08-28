@@ -184,9 +184,7 @@ class TestBuildWorkoutPlan:
         responses = [_response(MUSCLES), _response(exercises)]
         out_file = tmp_path / "plan.md"
         with patch.object(wger_client.requests, "get", side_effect=responses):
-            result = wger_client.build_workout_plan(
-                ["chest"], exercises_per_muscle=1, save_to=str(out_file)
-            )
+            wger_client.build_workout_plan(["chest"], exercises_per_muscle=1, save_to=str(out_file))
             content = out_file.read_text()
             assert "# Workout Plan" in content
             assert "3 sets x 8-12 reps, rest 90s" in content

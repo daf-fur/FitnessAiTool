@@ -46,7 +46,9 @@ TOOLS = [
         "type": "function",
         "function": {
             "name": "find_equipment_id",
-            "description": "Resolve an equipment name (e.g. dumbbell, barbell, bodyweight) to its wger equipment ID.",
+            "description": (
+                "Resolve an equipment name (e.g. dumbbell, barbell, bodyweight) to its wger equipment ID."
+            ),
             "parameters": {
                 "type": "object",
                 "properties": {
