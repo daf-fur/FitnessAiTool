@@ -12,7 +12,11 @@ TOOLS = [
                 "properties": {
                     "muscle_group": {
                         "type": "string",
-                        "description": "The muscle group to find exercises for.",
+                        "description": (
+                            "The muscle group to find exercises for. Compound terms "
+                            "like 'legs', 'back', 'arms', and 'core' are also supported "
+                            "and expand to their component muscles."
+                        ),
                     },
                     "equipment": {
                         "type": "string",
@@ -78,7 +82,11 @@ TOOLS = [
                     "muscle_groups": {
                         "type": "array",
                         "items": {"type": "string"},
-                        "description": "The muscle groups to include in the plan.",
+                        "description": (
+                            "The muscle groups to include in the plan. Compound terms "
+                            "like 'legs', 'back', 'arms', and 'core' are also supported "
+                            "and expand to their component muscles."
+                        ),
                     },
                     "exercises_per_muscle": {
                         "type": "integer",

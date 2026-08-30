@@ -13,6 +13,15 @@ REP_SCHEMES = {
 }
 DEFAULT_GOAL = "hypertrophy"
 
+MUSCLE_SYNONYMS = {
+    "legs": ["quads", "hamstrings", "calves", "glutes"],
+    "back": ["lats", "traps"],
+    "arms": ["biceps", "triceps"],
+    "core": ["abs", "obliques"],
+    "traps": ["trapezius"],
+    "obliques": ["obliquus externus abdominis"],
+}
+
 _muscle_cache = None
 _equipment_cache = None
 _last_plan = None
@@ -71,6 +80,25 @@ def find_equipment_id(equipment):
 
 
 def lookup_exercise(muscle_group, equipment=None, limit=5):
+    synonyms = MUSCLE_SYNONYMS.get(muscle_group.lower())
+    if synonyms:
+        merged = []
+        seen_names = set()
+        errors = []
+        for term in synonyms:
+            sub_results = lookup_exercise(term, equipment=equipment, limit=limit)
+            if isinstance(sub_results, dict):
+                errors.append(sub_results["error"])
+                continue
+            for exercise in sub_results:
+                if exercise["name"] not in seen_names:
+                    seen_names.add(exercise["name"])
+                    merged.append(exercise)
+
+        if not merged and errors:
+            return {"error": "; ".join(errors)}
+        return merged[:limit]
+
     muscle_id = find_muscle_id(muscle_group)
     if not isinstance(muscle_id, int):
         return muscle_id if isinstance(muscle_id, dict) else []

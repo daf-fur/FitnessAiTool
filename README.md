@@ -1,6 +1,10 @@
 # aiTool
 
-A chat agent that answers fitness questions by calling the [wger](https://wger.de) exercise API. Ask it for exercises by muscle group or equipment, or have it build a full workout plan.
+![CI](https://github.com/daf-fur/aiTool/actions/workflows/ci.yml/badge.svg)
+
+A small chat agent for fitness questions. Instead of letting the model make up exercise names from memory, it calls the [wger](https://wger.de) exercise API and answers from real data.
+
+I built this to get hands-on with tool-calling: giving an LLM a few functions, letting it decide when to call them, and grounding its answers in something real instead of trusting whatever it remembers.
 
 ## Setup
 
@@ -32,9 +36,9 @@ Example prompts:
 
 ## How it works
 
-- `agent.py` — chat loop, sends messages to `gpt-4o-mini` with tool-calling enabled
-- `tools.py` — tool schemas and the function dispatch table
-- `wger_client.py` — the wger API calls: muscle/equipment lookup (cached), exercise search, and workout plan building (dedupes exercises, applies sets/reps/rest by goal, can save to `.md` or `.json`)
+- `agent.py` — the chat loop, sends messages to `gpt-4o-mini` with tool-calling enabled
+- `tools.py` — the tool schemas the model sees, and a dispatch table mapping tool names to real functions
+- `wger_client.py` — the actual wger API calls: muscle/equipment lookup, exercise search, and workout plan building
 - `history.py` — logs the last built plan to `workout_history.json` and reads it back
 
 Tools available to the model:
@@ -45,7 +49,13 @@ Tools available to the model:
 - `log_last_workout(notes=None)` — logs the most recently built plan
 - `get_workout_history(limit=5)`
 
-Goals: `strength`, `hypertrophy` (default), `endurance` — each sets a different sets/reps/rest scheme.
+Goals — `strength`, `hypertrophy` (default), `endurance` — each set a different sets/reps/rest scheme.
+
+## A few design notes
+
+- **Caching**: wger's muscle and equipment lists barely ever change, so they're fetched once and reused instead of hitting the API on every lookup.
+- **Deduping**: wger tags exercises with secondary muscles too, so building a plan across several muscle groups kept pulling the same exercise more than once. The plan builder now tracks what's already been picked and skips repeats.
+- **Synonyms**: wger's muscle names are literal ("Quadriceps femoris"), so asking for "legs" wouldn't match anything. Common terms like `legs`, `back`, `arms`, and `core` get expanded to their component muscles before searching.
 
 ## Dev
 
@@ -54,3 +64,5 @@ pip install -r requirements-dev.txt
 pytest --cov=. --cov-report=term-missing
 ruff check .
 ```
+
+CI runs both on every push and pull request to `main`.

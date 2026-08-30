@@ -171,6 +171,54 @@ class TestLookupExercise:
             assert result == {"error": "Failed to look up exercises: down"}
 
 
+LEG_MUSCLES = {
+    "results": [
+        {"id": 10, "name": "Quadriceps femoris", "name_en": "Quads"},
+        {"id": 11, "name": "Biceps femoris", "name_en": "Hamstrings"},
+        {"id": 7, "name": "Gastrocnemius", "name_en": "Calves"},
+        {"id": 8, "name": "Gluteus maximus", "name_en": "Glutes"},
+    ]
+}
+
+
+class TestMuscleSynonyms:
+    def test_expands_compound_term_and_dedupes(self):
+        responses = [
+            _response(LEG_MUSCLES),
+            _response(_exerciseinfo(["Squat", "Shared Exercise"])),
+            _response(_exerciseinfo(["Deadlift"])),
+            _response(_exerciseinfo(["Calf Raise"])),
+            _response(_exerciseinfo(["Shared Exercise", "Hip Thrust"])),
+        ]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            result = wger_client.lookup_exercise("legs", limit=10)
+
+        names = [exercise["name"] for exercise in result]
+        assert names.count("Shared Exercise") == 1
+        assert set(names) == {"Squat", "Shared Exercise", "Deadlift", "Calf Raise", "Hip Thrust"}
+
+    def test_respects_limit_across_component_muscles(self):
+        responses = [
+            _response(LEG_MUSCLES),
+            _response(_exerciseinfo(["Squat", "Lunge"])),
+            _response(_exerciseinfo(["Deadlift"])),
+            _response(_exerciseinfo(["Calf Raise"])),
+            _response(_exerciseinfo(["Hip Thrust"])),
+        ]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            result = wger_client.lookup_exercise("legs", limit=2)
+
+        assert len(result) == 2
+
+    def test_returns_error_when_all_component_lookups_fail(self):
+        error = wger_client.requests.RequestException("down")
+        with patch.object(wger_client.requests, "get", side_effect=error):
+            result = wger_client.lookup_exercise("legs")
+
+        assert isinstance(result, dict)
+        assert "error" in result
+
+
 class TestBuildWorkoutPlan:
     def test_dedupes_exercises_across_muscle_groups(self):
         exercises = _exerciseinfo(["Bench Press"])
