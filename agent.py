@@ -20,8 +20,10 @@ SYSTEM_PROMPT = (
     "build_workout_plan also accepts a goal (strength, hypertrophy, or endurance) "
     "to set the sets/reps/rest scheme; ask the user's goal if it isn't clear, "
     "otherwise it defaults to hypertrophy. If the user asks to save or export a "
-    "plan, call build_workout_plan again with a save_to file path. Always ground "
-    "recommendations in real tool results."
+    "plan, call build_workout_plan again with a save_to file path. If the user says "
+    "they completed a workout, call log_last_workout. If they ask about past "
+    "workouts, call get_workout_history. Always ground recommendations in real "
+    "tool results."
 )
 
 

@@ -15,6 +15,7 @@ DEFAULT_GOAL = "hypertrophy"
 
 _muscle_cache = None
 _equipment_cache = None
+_last_plan = None
 
 
 def _get_muscles():
@@ -138,6 +139,9 @@ def build_workout_plan(muscle_groups, exercises_per_muscle=3, equipment=None, go
             exercise.update(scheme)
 
         plan.append({"muscle_group": muscle_group, "exercises": selected})
+
+    global _last_plan
+    _last_plan = plan
 
     if not save_to:
         return plan

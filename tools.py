@@ -1,3 +1,4 @@
+from history import get_workout_history, log_last_workout
 from wger_client import build_workout_plan, find_equipment_id, find_muscle_id, lookup_exercise
 
 TOOLS = [
@@ -111,6 +112,43 @@ TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "log_last_workout",
+            "description": (
+                "Log the most recently built workout plan to history, e.g. when the user "
+                "says they completed it. Fails if no plan has been built yet this session."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "notes": {
+                        "type": "string",
+                        "description": "Optional notes about how the workout went.",
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_workout_history",
+            "description": "Get past logged workouts, most recent last.",
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "limit": {
+                        "type": "integer",
+                        "description": "How many recent workouts to return (default 5).",
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
 ]
 
 AVAILABLE_FUNCTIONS = {
@@ -118,4 +156,6 @@ AVAILABLE_FUNCTIONS = {
     "find_muscle_id": find_muscle_id,
     "find_equipment_id": find_equipment_id,
     "build_workout_plan": build_workout_plan,
+    "log_last_workout": log_last_workout,
+    "get_workout_history": get_workout_history,
 }
