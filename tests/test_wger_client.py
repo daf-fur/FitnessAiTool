@@ -90,6 +90,14 @@ class TestFindEquipmentId:
         with patch.object(wger_client.requests, "get", return_value=_response(EQUIPMENT)):
             assert wger_client.find_equipment_id("kettlebell") is None
 
+    def test_returns_error_dict_on_request_failure(self):
+        with patch.object(
+            wger_client.requests, "get", side_effect=wger_client.requests.RequestException("down")
+        ):
+            result = wger_client.find_equipment_id("dumbbell")
+            assert isinstance(result, dict)
+            assert "error" in result
+
 
 class TestLookupExercise:
     def test_returns_exercises_for_known_muscle(self):
@@ -123,6 +131,44 @@ class TestLookupExercise:
         with patch.object(wger_client.requests, "get", side_effect=responses):
             result = wger_client.lookup_exercise("biceps")
             assert result == [{"name": "Curl de bíceps", "category": "Arms"}]
+
+    def test_returns_error_dict_when_equipment_lookup_fails(self):
+        responses = [
+            _response(MUSCLES),
+            wger_client.requests.RequestException("down"),
+        ]
+
+        def fake_get(*args, **kwargs):
+            result = responses.pop(0)
+            if isinstance(result, Exception):
+                raise result
+            return result
+
+        with patch.object(wger_client.requests, "get", side_effect=fake_get):
+            result = wger_client.lookup_exercise("chest", equipment="dumbbell")
+            assert isinstance(result, dict)
+            assert "error" in result
+
+    def test_filters_by_equipment_when_resolved(self):
+        exercises = _exerciseinfo(["Push-up"])
+        responses = [_response(MUSCLES), _response(EQUIPMENT), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses) as mock_get:
+            result = wger_client.lookup_exercise("chest", equipment="dumbbell")
+            assert result == [{"name": "Push-up", "category": "Arms"}]
+            assert "equipment=1" in mock_get.call_args_list[-1].args[0]
+
+    def test_returns_error_dict_on_exerciseinfo_request_failure(self):
+        responses = [_response(MUSCLES), wger_client.requests.RequestException("down")]
+
+        def fake_get(*args, **kwargs):
+            result = responses.pop(0)
+            if isinstance(result, Exception):
+                raise result
+            return result
+
+        with patch.object(wger_client.requests, "get", side_effect=fake_get):
+            result = wger_client.lookup_exercise("chest")
+            assert result == {"error": "Failed to look up exercises: down"}
 
 
 class TestBuildWorkoutPlan:
@@ -188,3 +234,24 @@ class TestBuildWorkoutPlan:
             content = out_file.read_text()
             assert "# Workout Plan" in content
             assert "3 sets x 8-12 reps, rest 90s" in content
+
+    def test_save_to_markdown_with_error_entry(self, tmp_path):
+        out_file = tmp_path / "plan.md"
+        with patch.object(
+            wger_client.requests, "get", side_effect=wger_client.requests.RequestException("down")
+        ):
+            wger_client.build_workout_plan(["chest"], save_to=str(out_file))
+            content = out_file.read_text()
+            assert "- Error:" in content
+
+    def test_save_error_is_reported(self, tmp_path):
+        exercises = _exerciseinfo(["Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        out_file = tmp_path / "plan.json"
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            with patch.object(wger_client.Path, "write_text", side_effect=OSError("disk full")):
+                result = wger_client.build_workout_plan(
+                    ["chest"], exercises_per_muscle=1, save_to=str(out_file)
+                )
+                assert "save_error" in result
+                assert "disk full" in result["save_error"]
