@@ -34,6 +34,18 @@ Example prompts:
 - "I did that workout, log it"
 - "what have I done recently?"
 
+Sample session:
+
+```
+> give me two bodyweight chest exercises
+Here are two bodyweight exercises for the chest:
+
+1. Dips
+2. Diamond Push-Ups
+
+These exercises effectively target the chest muscles using just your body weight! Let me know if you need more information or additional exercises.
+```
+
 ## How it works
 
 - `agent.py` — the chat loop, sends messages to `gpt-4o-mini` with tool-calling enabled
