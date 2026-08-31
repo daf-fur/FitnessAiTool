@@ -6,3 +6,6 @@ __pycache__/
 workout_history.json
 .pytest_cache/
 .ruff_cache/
+*.egg-info/
+build/
+dist/

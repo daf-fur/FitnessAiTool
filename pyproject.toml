@@ -1,3 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "wger-fitness-agent"
+version = "0.1.0"
+description = "A small chat agent for fitness questions, grounded in the wger exercise API."
+readme = "README.md"
+license = { file = "LICENSE" }
+requires-python = ">=3.9"
+dependencies = [
+    "requests",
+    "python-dotenv",
+    "openai",
+]
+
+[project.scripts]
+fitness-agent = "agent:chat"
+
+[tool.setuptools]
+py-modules = ["agent", "tools", "wger_client", "history"]
+
 [tool.ruff]
 line-length = 110
 

@@ -12,6 +12,12 @@ I built this to get hands-on with tool-calling: giving an LLM a few functions, l
 pip install -r requirements.txt
 ```
 
+Or install it as a CLI tool:
+
+```
+pip install -e .
+```
+
 Add your OpenAI key to a `.env` file:
 
 ```
@@ -22,6 +28,12 @@ OPENAI_API_KEY=sk-...
 
 ```
 python agent.py
+```
+
+or, if installed via `pip install -e .`:
+
+```
+fitness-agent
 ```
 
 Starts an interactive chat. Type `exit` or `quit` to stop.
