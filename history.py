@@ -41,3 +41,15 @@ def get_workout_history(limit=5, history_file=DEFAULT_HISTORY_FILE):
     if limit:
         history = history[-limit:]
     return history
+
+
+def get_exercise_progress(exercise_name, history_file=DEFAULT_HISTORY_FILE):
+    """Return how many times an exercise has been logged before."""
+    history = _read_history(history_file)
+    times_logged = 0
+    for entry in history:
+        for muscle_entry in entry.get("plan", []):
+            for exercise in muscle_entry.get("exercises", []):
+                if exercise.get("name") == exercise_name:
+                    times_logged += 1
+    return times_logged

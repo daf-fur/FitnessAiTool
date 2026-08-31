@@ -61,6 +61,8 @@ Tools available to the model:
 - `log_last_workout(notes=None)` — logs the most recently built plan
 - `get_workout_history(limit=5)`
 
+`get_workout_history` isn't a required tool call before every plan — `build_workout_plan` checks it automatically. Any exercise you've logged before comes back with a `progression` tip suggesting a rep or weight bump.
+
 Goals — `strength`, `hypertrophy` (default), `endurance` — each set a different sets/reps/rest scheme.
 
 ## A few design notes
@@ -68,6 +70,7 @@ Goals — `strength`, `hypertrophy` (default), `endurance` — each set a differ
 - **Caching**: wger's muscle and equipment lists barely ever change, so they're fetched once and reused instead of hitting the API on every lookup.
 - **Deduping**: wger tags exercises with secondary muscles too, so building a plan across several muscle groups kept pulling the same exercise more than once. The plan builder now tracks what's already been picked and skips repeats.
 - **Synonyms**: wger's muscle names are literal ("Quadriceps femoris"), so asking for "legs" wouldn't match anything. Common terms like `legs`, `back`, `arms`, and `core` get expanded to their component muscles before searching.
+- **Progressive overload**: `build_workout_plan` checks `workout_history.json` for each exercise it picks. If you've logged it before, it comes back with a `progression` tip to bump weight or reps, so repeat workouts nudge you forward instead of staying static.
 
 ## Dev
 

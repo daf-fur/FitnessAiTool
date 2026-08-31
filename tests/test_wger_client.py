@@ -1,3 +1,4 @@
+import json
 from unittest.mock import patch
 
 import pytest
@@ -220,11 +221,13 @@ class TestMuscleSynonyms:
 
 
 class TestBuildWorkoutPlan:
-    def test_dedupes_exercises_across_muscle_groups(self):
+    def test_dedupes_exercises_across_muscle_groups(self, tmp_path):
         exercises = _exerciseinfo(["Bench Press"])
         responses = [_response(MUSCLES), _response(exercises), _response(exercises)]
         with patch.object(wger_client.requests, "get", side_effect=responses):
-            plan = wger_client.build_workout_plan(["chest", "biceps"], exercises_per_muscle=1)
+            plan = wger_client.build_workout_plan(
+                ["chest", "biceps"], exercises_per_muscle=1, history_file=tmp_path / "history.json"
+            )
             assert plan[0]["exercises"] == [
                 {
                     "name": "Bench Press",
@@ -236,29 +239,33 @@ class TestBuildWorkoutPlan:
             ]
             assert plan[1]["exercises"] == []
 
-    def test_applies_goal_specific_scheme(self):
+    def test_applies_goal_specific_scheme(self, tmp_path):
         exercises = _exerciseinfo(["Squat"])
         responses = [_response(MUSCLES), _response(exercises)]
         with patch.object(wger_client.requests, "get", side_effect=responses):
-            plan = wger_client.build_workout_plan(["chest"], exercises_per_muscle=1, goal="strength")
+            plan = wger_client.build_workout_plan(
+                ["chest"], exercises_per_muscle=1, goal="strength", history_file=tmp_path / "history.json"
+            )
             exercise = plan[0]["exercises"][0]
             assert exercise["sets"] == 5
             assert exercise["reps"] == "5"
             assert exercise["rest_seconds"] == 180
 
-    def test_unknown_goal_falls_back_to_default(self):
+    def test_unknown_goal_falls_back_to_default(self, tmp_path):
         exercises = _exerciseinfo(["Squat"])
         responses = [_response(MUSCLES), _response(exercises)]
         with patch.object(wger_client.requests, "get", side_effect=responses):
-            plan = wger_client.build_workout_plan(["chest"], exercises_per_muscle=1, goal="yoga")
+            plan = wger_client.build_workout_plan(
+                ["chest"], exercises_per_muscle=1, goal="yoga", history_file=tmp_path / "history.json"
+            )
             exercise = plan[0]["exercises"][0]
             assert exercise["sets"] == wger_client.REP_SCHEMES[wger_client.DEFAULT_GOAL]["sets"]
 
-    def test_records_error_for_failed_muscle_group(self):
+    def test_records_error_for_failed_muscle_group(self, tmp_path):
         with patch.object(
             wger_client.requests, "get", side_effect=wger_client.requests.RequestException("down")
         ):
-            plan = wger_client.build_workout_plan(["chest"])
+            plan = wger_client.build_workout_plan(["chest"], history_file=tmp_path / "history.json")
             assert "error" in plan[0]
 
     def test_save_to_json(self, tmp_path):
@@ -267,7 +274,10 @@ class TestBuildWorkoutPlan:
         out_file = tmp_path / "plan.json"
         with patch.object(wger_client.requests, "get", side_effect=responses):
             result = wger_client.build_workout_plan(
-                ["chest"], exercises_per_muscle=1, save_to=str(out_file)
+                ["chest"],
+                exercises_per_muscle=1,
+                save_to=str(out_file),
+                history_file=tmp_path / "history.json",
             )
             assert result["saved_to"] == str(out_file)
             assert out_file.exists()
@@ -278,7 +288,12 @@ class TestBuildWorkoutPlan:
         responses = [_response(MUSCLES), _response(exercises)]
         out_file = tmp_path / "plan.md"
         with patch.object(wger_client.requests, "get", side_effect=responses):
-            wger_client.build_workout_plan(["chest"], exercises_per_muscle=1, save_to=str(out_file))
+            wger_client.build_workout_plan(
+                ["chest"],
+                exercises_per_muscle=1,
+                save_to=str(out_file),
+                history_file=tmp_path / "history.json",
+            )
             content = out_file.read_text()
             assert "# Workout Plan" in content
             assert "3 sets x 8-12 reps, rest 90s" in content
@@ -288,7 +303,9 @@ class TestBuildWorkoutPlan:
         with patch.object(
             wger_client.requests, "get", side_effect=wger_client.requests.RequestException("down")
         ):
-            wger_client.build_workout_plan(["chest"], save_to=str(out_file))
+            wger_client.build_workout_plan(
+                ["chest"], save_to=str(out_file), history_file=tmp_path / "history.json"
+            )
             content = out_file.read_text()
             assert "- Error:" in content
 
@@ -299,7 +316,71 @@ class TestBuildWorkoutPlan:
         with patch.object(wger_client.requests, "get", side_effect=responses):
             with patch.object(wger_client.Path, "write_text", side_effect=OSError("disk full")):
                 result = wger_client.build_workout_plan(
-                    ["chest"], exercises_per_muscle=1, save_to=str(out_file)
+                    ["chest"],
+                    exercises_per_muscle=1,
+                    save_to=str(out_file),
+                    history_file=tmp_path / "history.json",
                 )
                 assert "save_error" in result
                 assert "disk full" in result["save_error"]
+
+
+class TestBuildWorkoutPlanProgression:
+    def test_adds_progression_note_for_previously_logged_exercise(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [{"plan": [{"muscle_group": "chest", "exercises": [{"name": "Bench Press"}]}]}]
+            )
+        )
+        exercises = _exerciseinfo(["Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            plan = wger_client.build_workout_plan(
+                ["chest"], exercises_per_muscle=1, history_file=history_file
+            )
+            assert "Logged once before" in plan[0]["exercises"][0]["progression"]
+
+    def test_progression_note_pluralizes_for_repeat_logs(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [
+                    {"plan": [{"muscle_group": "chest", "exercises": [{"name": "Bench Press"}]}]},
+                    {"plan": [{"muscle_group": "chest", "exercises": [{"name": "Bench Press"}]}]},
+                ]
+            )
+        )
+        exercises = _exerciseinfo(["Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            plan = wger_client.build_workout_plan(
+                ["chest"], exercises_per_muscle=1, history_file=history_file
+            )
+            assert "Logged 2 times before" in plan[0]["exercises"][0]["progression"]
+
+    def test_no_progression_note_for_new_exercise(self, tmp_path):
+        exercises = _exerciseinfo(["Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            plan = wger_client.build_workout_plan(
+                ["chest"], exercises_per_muscle=1, history_file=tmp_path / "history.json"
+            )
+            assert "progression" not in plan[0]["exercises"][0]
+
+    def test_progression_note_appears_in_markdown(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [{"plan": [{"muscle_group": "chest", "exercises": [{"name": "Bench Press"}]}]}]
+            )
+        )
+        exercises = _exerciseinfo(["Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        out_file = tmp_path / "plan.md"
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            wger_client.build_workout_plan(
+                ["chest"], exercises_per_muscle=1, save_to=str(out_file), history_file=history_file
+            )
+            content = out_file.read_text()
+            assert "Logged once before" in content

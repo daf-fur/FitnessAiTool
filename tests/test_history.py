@@ -76,3 +76,40 @@ class TestGetWorkoutHistory:
         history_file.write_text(json.dumps([{"n": i} for i in range(3)]))
 
         assert len(history.get_workout_history(limit=None, history_file=history_file)) == 3
+
+
+class TestGetExerciseProgress:
+    def test_returns_zero_when_no_history(self, tmp_path):
+        history_file = tmp_path / "missing.json"
+        assert history.get_exercise_progress("Bench Press", history_file=history_file) == 0
+
+    def test_counts_matching_exercise_across_entries(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [
+                    {"plan": [{"muscle_group": "chest", "exercises": [{"name": "Bench Press"}]}]},
+                    {"plan": [{"muscle_group": "chest", "exercises": [{"name": "Push-up"}]}]},
+                    {
+                        "plan": [
+                            {
+                                "muscle_group": "chest",
+                                "exercises": [{"name": "Bench Press"}, {"name": "Dip"}],
+                            }
+                        ]
+                    },
+                ]
+            )
+        )
+
+        assert history.get_exercise_progress("Bench Press", history_file=history_file) == 2
+        assert history.get_exercise_progress("Dip", history_file=history_file) == 1
+        assert history.get_exercise_progress("Overhead Press", history_file=history_file) == 0
+
+    def test_handles_entries_with_error_muscle_groups(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps([{"plan": [{"muscle_group": "legs", "error": "boom"}]}])
+        )
+
+        assert history.get_exercise_progress("Squat", history_file=history_file) == 0

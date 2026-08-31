@@ -74,7 +74,9 @@ TOOLS = [
                 "Build a full workout plan by looking up exercises for multiple "
                 "muscle groups at once (e.g. a push day: chest, shoulders, triceps). "
                 "Exercises are deduplicated across the whole plan so the same "
-                "exercise isn't repeated under different muscle groups."
+                "exercise isn't repeated under different muscle groups. Exercises "
+                "logged in workout history before come back with a 'progression' "
+                "tip suggesting adding weight or reps — mention it if present."
             ),
             "parameters": {
                 "type": "object",

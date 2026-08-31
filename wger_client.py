@@ -130,6 +130,14 @@ def lookup_exercise(muscle_group, equipment=None, limit=5):
     return results
 
 
+def _progression_note(times_logged):
+    if times_logged == 0:
+        return None
+    if times_logged == 1:
+        return "Logged once before — try adding a rep or a bit more weight this time."
+    return f"Logged {times_logged} times before — keep pushing weight or reps if it's felt easy."
+
+
 def _plan_to_markdown(plan):
     lines = ["# Workout Plan", ""]
     for entry in plan:
@@ -143,13 +151,20 @@ def _plan_to_markdown(plan):
                     f"{exercise['sets']} sets x {exercise['reps']} reps, "
                     f"rest {exercise['rest_seconds']}s"
                 )
+                if exercise.get("progression"):
+                    lines.append(f"   - {exercise['progression']}")
         lines.append("")
 
     return "\n".join(lines)
 
 
-def build_workout_plan(muscle_groups, exercises_per_muscle=3, equipment=None, goal=None, save_to=None):
+def build_workout_plan(
+    muscle_groups, exercises_per_muscle=3, equipment=None, goal=None, save_to=None, history_file=None
+):
+    import history as history_module
+
     scheme = REP_SCHEMES.get(goal, REP_SCHEMES[DEFAULT_GOAL])
+    history_kwargs = {"history_file": history_file} if history_file is not None else {}
 
     plan = []
     used_names = set()
@@ -165,6 +180,10 @@ def build_workout_plan(muscle_groups, exercises_per_muscle=3, equipment=None, go
         used_names.update(e["name"] for e in selected)
         for exercise in selected:
             exercise.update(scheme)
+            times_logged = history_module.get_exercise_progress(exercise["name"], **history_kwargs)
+            note = _progression_note(times_logged)
+            if note:
+                exercise["progression"] = note
 
         plan.append({"muscle_group": muscle_group, "exercises": selected})
 
