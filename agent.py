@@ -1,9 +1,12 @@
+import argparse
 import json
 
 from dotenv import load_dotenv
 from openai import OpenAI
 
-from tools import AVAILABLE_FUNCTIONS, TOOLS
+import paths
+import tools
+from tools import TOOLS
 
 load_dotenv()
 
@@ -23,7 +26,16 @@ SYSTEM_PROMPT = (
     "plan, call build_workout_plan again with a save_to file path. If the user says "
     "they completed a workout, call log_last_workout. If they ask about past "
     "workouts, call get_workout_history. Always ground recommendations in real "
-    "tool results."
+    "tool results. The user's saved profile (default equipment, goal, and "
+    "exercise/injury exclusions) is applied automatically by lookup_exercise and "
+    "build_workout_plan whenever those aren't specified in the current request. "
+    "Call update_profile whenever the user states a lasting preference — equipment "
+    "they own, a training goal, or an exercise/muscle to avoid — so it's remembered "
+    "next time. Use get_profile if the user asks what's saved."
+)
+
+AVAILABLE_FUNCTIONS = tools.build_dispatch(
+    paths.profile_path(paths.resolve_user()), paths.history_path(paths.resolve_user())
 )
 
 
@@ -54,7 +66,11 @@ def run_turn(messages):
     return message.content
 
 
-def run_agent(user_message):
+def run_agent(user_message, user=None):
+    global AVAILABLE_FUNCTIONS
+    if user is not None:
+        AVAILABLE_FUNCTIONS = tools.build_dispatch(paths.profile_path(user), paths.history_path(user))
+
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
         {"role": "user", "content": user_message},
@@ -62,9 +78,15 @@ def run_agent(user_message):
     return run_turn(messages)
 
 
-def chat():
+def chat(user=None):
+    global AVAILABLE_FUNCTIONS
+    resolved_user = paths.resolve_user(user)
+    AVAILABLE_FUNCTIONS = tools.build_dispatch(
+        paths.profile_path(resolved_user), paths.history_path(resolved_user)
+    )
+
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    print("Fitness agent ready. Type 'exit' or 'quit' to stop.")
+    print(f"Fitness agent ready for {resolved_user}. Type 'exit' or 'quit' to stop.")
 
     while True:
         try:
@@ -89,5 +111,14 @@ def chat():
         print(reply)
 
 
+def main():
+    parser = argparse.ArgumentParser(description="Fitness chat agent")
+    parser.add_argument(
+        "--user", help="Profile/history identity to use (defaults to $FITNESS_AGENT_USER or your OS username)"
+    )
+    args = parser.parse_args()
+    chat(user=args.user)
+
+
 if __name__ == "__main__":
-    chat()
+    main()

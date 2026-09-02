@@ -16,10 +16,10 @@ dependencies = [
 ]
 
 [project.scripts]
-fitness-agent = "agent:chat"
+fitness-agent = "agent:main"
 
 [tool.setuptools]
-py-modules = ["agent", "tools", "wger_client", "history"]
+py-modules = ["agent", "tools", "wger_client", "history", "user_profile", "paths"]
 
 [tool.ruff]
 line-length = 110

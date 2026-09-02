@@ -3,6 +3,8 @@ from pathlib import Path
 
 import requests
 
+import user_profile
+
 WGER_BASE_URL = "https://wger.de/api/v2"
 ENGLISH_LANGUAGE_ID = 2
 
@@ -79,14 +81,25 @@ def find_equipment_id(equipment):
     return None
 
 
-def lookup_exercise(muscle_group, equipment=None, limit=5):
+def _excludes(name, exclusions):
+    name_lower = name.lower()
+    return any(term.lower() in name_lower for term in exclusions)
+
+
+def lookup_exercise(muscle_group, equipment=None, limit=5, profile_file=None):
+    profile_kwargs = {"profile_file": profile_file} if profile_file is not None else {}
+    profile = user_profile.get_profile(**profile_kwargs)
+    if equipment is None:
+        equipment = profile["equipment"]
+    exclusions = profile["exclusions"]
+
     synonyms = MUSCLE_SYNONYMS.get(muscle_group.lower())
     if synonyms:
         merged = []
         seen_names = set()
         errors = []
         for term in synonyms:
-            sub_results = lookup_exercise(term, equipment=equipment, limit=limit)
+            sub_results = lookup_exercise(term, equipment=equipment, limit=limit, profile_file=profile_file)
             if isinstance(sub_results, dict):
                 errors.append(sub_results["error"])
                 continue
@@ -127,6 +140,9 @@ def lookup_exercise(muscle_group, equipment=None, limit=5):
         name = english["name"] if english else translations[0]["name"] if translations else None
         results.append({"name": name, "category": exercise["category"]["name"]})
 
+    if exclusions:
+        results = [exercise for exercise in results if not _excludes(exercise["name"], exclusions)]
+
     return results
 
 
@@ -159,9 +175,22 @@ def _plan_to_markdown(plan):
 
 
 def build_workout_plan(
-    muscle_groups, exercises_per_muscle=3, equipment=None, goal=None, save_to=None, history_file=None
+    muscle_groups,
+    exercises_per_muscle=3,
+    equipment=None,
+    goal=None,
+    save_to=None,
+    history_file=None,
+    profile_file=None,
 ):
     import history as history_module
+
+    profile_kwargs = {"profile_file": profile_file} if profile_file is not None else {}
+    profile = user_profile.get_profile(**profile_kwargs)
+    if equipment is None:
+        equipment = profile["equipment"]
+    if goal is None:
+        goal = profile["goal"]
 
     scheme = REP_SCHEMES.get(goal, REP_SCHEMES[DEFAULT_GOAL])
     history_kwargs = {"history_file": history_file} if history_file is not None else {}
@@ -170,7 +199,9 @@ def build_workout_plan(
     used_names = set()
 
     for muscle_group in muscle_groups:
-        exercises = lookup_exercise(muscle_group, equipment=equipment, limit=exercises_per_muscle + 5)
+        exercises = lookup_exercise(
+            muscle_group, equipment=equipment, limit=exercises_per_muscle + 5, profile_file=profile_file
+        )
         if isinstance(exercises, dict):
             plan.append({"muscle_group": muscle_group, "error": exercises["error"]})
             continue

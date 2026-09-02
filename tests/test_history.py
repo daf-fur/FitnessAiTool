@@ -30,6 +30,14 @@ class TestLogLastWorkout:
         saved = json.loads(history_file.read_text())
         assert saved == [entry]
 
+    def test_creates_parent_directory(self, tmp_path):
+        wger_client._last_plan = [{"muscle_group": "chest", "exercises": []}]
+        history_file = tmp_path / "nested" / "dir" / "history.json"
+
+        history.log_last_workout(history_file=history_file)
+
+        assert history_file.exists()
+
     def test_appends_to_existing_history(self, tmp_path):
         history_file = tmp_path / "history.json"
         history_file.write_text(json.dumps([{"plan": "old"}]))

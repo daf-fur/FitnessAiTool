@@ -1,6 +1,16 @@
 from unittest.mock import patch
 
+import pytest
+
 import agent
+import paths
+
+
+@pytest.fixture(autouse=True)
+def restore_available_functions():
+    original = agent.AVAILABLE_FUNCTIONS
+    yield
+    agent.AVAILABLE_FUNCTIONS = original
 
 
 class FakeFunction:
@@ -142,3 +152,59 @@ class TestChat:
     def test_exits_on_keyboard_interrupt(self):
         with patch("builtins.input", side_effect=KeyboardInterrupt):
             agent.chat()
+
+
+class TestMain:
+    def test_parses_user_flag_and_calls_chat(self):
+        with (
+            patch("sys.argv", ["fitness-agent", "--user", "alice"]),
+            patch.object(agent, "chat") as mock_chat,
+        ):
+            agent.main()
+
+        mock_chat.assert_called_once_with(user="alice")
+
+    def test_defaults_user_to_none(self):
+        with (
+            patch("sys.argv", ["fitness-agent"]),
+            patch.object(agent, "chat") as mock_chat,
+        ):
+            agent.main()
+
+        mock_chat.assert_called_once_with(user=None)
+
+
+class TestUserScoping:
+    def test_run_agent_rebuilds_dispatch_for_explicit_user(self):
+        sentinel = object()
+        with (
+            patch.object(agent.tools, "build_dispatch", return_value=sentinel) as mock_build,
+            patch.object(agent, "run_turn", return_value="reply"),
+        ):
+            agent.run_agent("hi", user="alice")
+
+        mock_build.assert_called_once_with(paths.profile_path("alice"), paths.history_path("alice"))
+        assert agent.AVAILABLE_FUNCTIONS is sentinel
+
+    def test_run_agent_leaves_dispatch_unchanged_when_no_user(self):
+        original = agent.AVAILABLE_FUNCTIONS
+        with (
+            patch.object(agent.tools, "build_dispatch") as mock_build,
+            patch.object(agent, "run_turn", return_value="reply"),
+        ):
+            agent.run_agent("hi")
+
+        mock_build.assert_not_called()
+        assert agent.AVAILABLE_FUNCTIONS is original
+
+    def test_chat_rebuilds_dispatch_for_resolved_user(self):
+        sentinel = object()
+        with (
+            patch.object(agent.paths, "resolve_user", return_value="alice"),
+            patch.object(agent.tools, "build_dispatch", return_value=sentinel) as mock_build,
+            patch("builtins.input", side_effect=["exit"]),
+        ):
+            agent.chat(user="alice")
+
+        mock_build.assert_called_once_with(paths.profile_path("alice"), paths.history_path("alice"))
+        assert agent.AVAILABLE_FUNCTIONS is sentinel

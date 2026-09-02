@@ -29,6 +29,7 @@ def log_last_workout(notes=None, history_file=DEFAULT_HISTORY_FILE):
     history = _read_history(history_file)
     history.append(entry)
     try:
+        history_file.parent.mkdir(parents=True, exist_ok=True)
         history_file.write_text(json.dumps(history, indent=2), encoding="utf-8")
     except OSError as error:
         return {"error": f"Failed to save workout history: {error}"}

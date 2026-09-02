@@ -220,6 +220,36 @@ class TestMuscleSynonyms:
         assert "error" in result
 
 
+class TestLookupExerciseProfile:
+    def test_uses_profile_equipment_when_none_given(self, tmp_path):
+        profile_file = tmp_path / "profile.json"
+        profile_file.write_text(json.dumps({"equipment": "dumbbell"}))
+        exercises = _exerciseinfo(["Push-up"])
+        responses = [_response(MUSCLES), _response(EQUIPMENT), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses) as mock_get:
+            result = wger_client.lookup_exercise("chest", profile_file=profile_file)
+            assert result == [{"name": "Push-up", "category": "Arms"}]
+            assert "equipment=1" in mock_get.call_args_list[-1].args[0]
+
+    def test_explicit_equipment_overrides_profile(self, tmp_path):
+        profile_file = tmp_path / "profile.json"
+        profile_file.write_text(json.dumps({"equipment": "bodyweight"}))
+        exercises = _exerciseinfo(["Push-up"])
+        responses = [_response(MUSCLES), _response(EQUIPMENT), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses) as mock_get:
+            wger_client.lookup_exercise("chest", equipment="dumbbell", profile_file=profile_file)
+            assert "equipment=1" in mock_get.call_args_list[-1].args[0]
+
+    def test_filters_out_excluded_exercise(self, tmp_path):
+        profile_file = tmp_path / "profile.json"
+        profile_file.write_text(json.dumps({"exclusions": ["Push-up"]}))
+        exercises = _exerciseinfo(["Push-up", "Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            result = wger_client.lookup_exercise("chest", profile_file=profile_file)
+            assert result == [{"name": "Bench Press", "category": "Arms"}]
+
+
 class TestBuildWorkoutPlan:
     def test_dedupes_exercises_across_muscle_groups(self, tmp_path):
         exercises = _exerciseinfo(["Bench Press"])
@@ -323,6 +353,41 @@ class TestBuildWorkoutPlan:
                 )
                 assert "save_error" in result
                 assert "disk full" in result["save_error"]
+
+
+class TestBuildWorkoutPlanProfile:
+    def test_uses_profile_goal_when_none_given(self, tmp_path):
+        profile_file = tmp_path / "profile.json"
+        profile_file.write_text(json.dumps({"goal": "strength"}))
+        exercises = _exerciseinfo(["Squat"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            plan = wger_client.build_workout_plan(
+                ["chest"],
+                exercises_per_muscle=1,
+                history_file=tmp_path / "history.json",
+                profile_file=profile_file,
+            )
+            exercise = plan[0]["exercises"][0]
+            assert exercise["sets"] == 5
+            assert exercise["reps"] == "5"
+
+    def test_explicit_goal_overrides_profile(self, tmp_path):
+        profile_file = tmp_path / "profile.json"
+        profile_file.write_text(json.dumps({"goal": "strength"}))
+        exercises = _exerciseinfo(["Squat"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            plan = wger_client.build_workout_plan(
+                ["chest"],
+                exercises_per_muscle=1,
+                goal="endurance",
+                history_file=tmp_path / "history.json",
+                profile_file=profile_file,
+            )
+            exercise = plan[0]["exercises"][0]
+            assert exercise["sets"] == 3
+            assert exercise["reps"] == "15-20"
 
 
 class TestBuildWorkoutPlanProgression:

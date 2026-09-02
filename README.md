@@ -38,6 +38,12 @@ fitness-agent
 
 Starts an interactive chat. Type `exit` or `quit` to stop.
 
+Your profile and workout history are scoped per user, so multiple people can share the same install without mixing data. Identity comes from `--user <name>`, then the `FITNESS_AGENT_USER` env var, then your OS username:
+
+```
+fitness-agent --user alice
+```
+
 Example prompts:
 - "give me some chest exercises"
 - "bodyweight leg exercises"
@@ -45,6 +51,8 @@ Example prompts:
 - "make that a strength-focused plan and save it to plan.md"
 - "I did that workout, log it"
 - "what have I done recently?"
+- "I only have dumbbells at home, remember that"
+- "my knee's bothering me, avoid squats"
 
 Sample session:
 
@@ -60,10 +68,12 @@ These exercises effectively target the chest muscles using just your body weight
 
 ## How it works
 
-- `agent.py` — the chat loop, sends messages to `gpt-4o-mini` with tool-calling enabled
-- `tools.py` — the tool schemas the model sees, and a dispatch table mapping tool names to real functions
+- `agent.py` — the chat loop, sends messages to `gpt-4o-mini` with tool-calling enabled; resolves the current user and binds the tool dispatch table to their profile/history files
+- `tools.py` — the tool schemas the model sees, and `build_dispatch(profile_file, history_file)`, a factory that binds tool names to real functions scoped to one user's data
 - `wger_client.py` — the actual wger API calls: muscle/equipment lookup, exercise search, and workout plan building
-- `history.py` — logs the last built plan to `workout_history.json` and reads it back
+- `history.py` — logs the last built plan to a per-user `workout_history.json` and reads it back
+- `user_profile.py` — saves default equipment, default goal, and exercise/injury exclusions to a per-user `user_profile.json`
+- `paths.py` — resolves which user is running the session and maps them to `data/<user>/user_profile.json` and `data/<user>/workout_history.json`
 
 Tools available to the model:
 - `lookup_exercise(muscle_group, equipment=None)`
@@ -72,6 +82,8 @@ Tools available to the model:
 - `build_workout_plan(muscle_groups, exercises_per_muscle=3, equipment=None, goal=None, save_to=None)`
 - `log_last_workout(notes=None)` — logs the most recently built plan
 - `get_workout_history(limit=5)`
+- `get_profile()` — returns saved default equipment, goal, and exclusions
+- `update_profile(equipment=None, goal=None, add_exclusions=None, remove_exclusions=None)` — saves a lasting preference
 
 `get_workout_history` isn't a required tool call before every plan — `build_workout_plan` checks it automatically. Any exercise you've logged before comes back with a `progression` tip suggesting a rep or weight bump.
 
@@ -82,7 +94,9 @@ Goals — `strength`, `hypertrophy` (default), `endurance` — each set a differ
 - **Caching**: wger's muscle and equipment lists barely ever change, so they're fetched once and reused instead of hitting the API on every lookup.
 - **Deduping**: wger tags exercises with secondary muscles too, so building a plan across several muscle groups kept pulling the same exercise more than once. The plan builder now tracks what's already been picked and skips repeats.
 - **Synonyms**: wger's muscle names are literal ("Quadriceps femoris"), so asking for "legs" wouldn't match anything. Common terms like `legs`, `back`, `arms`, and `core` get expanded to their component muscles before searching.
-- **Progressive overload**: `build_workout_plan` checks `workout_history.json` for each exercise it picks. If you've logged it before, it comes back with a `progression` tip to bump weight or reps, so repeat workouts nudge you forward instead of staying static.
+- **Progressive overload**: `build_workout_plan` checks workout history for each exercise it picks. If you've logged it before, it comes back with a `progression` tip to bump weight or reps, so repeat workouts nudge you forward instead of staying static.
+- **Profile**: `lookup_exercise` and `build_workout_plan` fall back to your saved equipment/goal whenever a request doesn't specify one, and automatically skip anything on your exclusions list — so "no barbell" or "my knee hurts, no squats" only needs to be said once. An explicit equipment/goal in a request still overrides the saved default for that request.
+- **Per-user data**: profile and history live under `data/<user>/`, keyed by whatever identity `agent.py` resolves (`--user`, then `$FITNESS_AGENT_USER`, then your OS username) — so a shared install doesn't mix people's data. Anything saved before this existed (a root-level `workout_history.json`) isn't auto-migrated.
 
 ## Dev
 

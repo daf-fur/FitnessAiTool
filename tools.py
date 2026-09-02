@@ -1,5 +1,8 @@
-from history import get_workout_history, log_last_workout
-from wger_client import build_workout_plan, find_equipment_id, find_muscle_id, lookup_exercise
+from functools import partial
+
+import history
+import user_profile
+import wger_client
 
 TOOLS = [
     {
@@ -159,13 +162,82 @@ TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "get_profile",
+            "description": (
+                "Get the user's saved profile: default equipment, default training goal, and "
+                "exercise/muscle exclusions (e.g. from injuries). Call this if the user asks what's "
+                "saved, or to check before re-asking a preference that might already be on file."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {},
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_profile",
+            "description": (
+                "Save or update the user's profile so preferences persist across sessions. Call "
+                "this whenever the user states a lasting preference: default equipment they train "
+                "with, a training goal, or an exercise/injury to avoid (e.g. 'my knee hurts, no "
+                "squats' or 'I only have dumbbells at home'). lookup_exercise and build_workout_plan "
+                "automatically use these as defaults when equipment/goal aren't given explicitly in "
+                "the request, and automatically skip excluded exercises."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "equipment": {
+                        "type": "string",
+                        "description": (
+                            "Default equipment to assume when not stated (e.g. dumbbell, bodyweight)."
+                        ),
+                    },
+                    "goal": {
+                        "type": "string",
+                        "enum": ["strength", "hypertrophy", "endurance"],
+                        "description": "Default training goal to assume when not stated.",
+                    },
+                    "add_exclusions": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "Exercise names or muscle groups to avoid (e.g. due to injury or lack of "
+                            "equipment), added to the saved list."
+                        ),
+                    },
+                    "remove_exclusions": {
+                        "type": "array",
+                        "items": {"type": "string"},
+                        "description": (
+                            "Previously saved exclusions to remove, e.g. once an injury has healed."
+                        ),
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
 ]
 
-AVAILABLE_FUNCTIONS = {
-    "lookup_exercise": lookup_exercise,
-    "find_muscle_id": find_muscle_id,
-    "find_equipment_id": find_equipment_id,
-    "build_workout_plan": build_workout_plan,
-    "log_last_workout": log_last_workout,
-    "get_workout_history": get_workout_history,
-}
+
+def build_dispatch(profile_file, history_file):
+    """Build the tool dispatch table bound to a specific user's profile/history files."""
+    return {
+        "lookup_exercise": partial(wger_client.lookup_exercise, profile_file=profile_file),
+        "find_muscle_id": wger_client.find_muscle_id,
+        "find_equipment_id": wger_client.find_equipment_id,
+        "build_workout_plan": partial(
+            wger_client.build_workout_plan, profile_file=profile_file, history_file=history_file
+        ),
+        "log_last_workout": partial(history.log_last_workout, history_file=history_file),
+        "get_workout_history": partial(history.get_workout_history, history_file=history_file),
+        "get_profile": partial(user_profile.get_profile, profile_file=profile_file),
+        "update_profile": partial(user_profile.update_profile, profile_file=profile_file),
+    }
