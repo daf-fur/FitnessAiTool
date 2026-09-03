@@ -1,5 +1,6 @@
 import argparse
 import json
+from importlib.metadata import PackageNotFoundError, version
 
 from dotenv import load_dotenv
 from openai import OpenAI
@@ -111,11 +112,19 @@ def chat(user=None):
         print(reply)
 
 
+def _version():
+    try:
+        return version("wger-fitness-agent")
+    except PackageNotFoundError:
+        return "unknown"
+
+
 def main():
     parser = argparse.ArgumentParser(description="Fitness chat agent")
     parser.add_argument(
         "--user", help="Profile/history identity to use (defaults to $FITNESS_AGENT_USER or your OS username)"
     )
+    parser.add_argument("--version", action="version", version=f"fitness-agent {_version()}")
     args = parser.parse_args()
     chat(user=args.user)
 
