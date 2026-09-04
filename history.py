@@ -16,7 +16,7 @@ def _read_history(history_file):
         return []
 
 
-def log_last_workout(notes=None, history_file=DEFAULT_HISTORY_FILE):
+def log_last_workout(sets=None, notes=None, history_file=DEFAULT_HISTORY_FILE):
     if wger_client._last_plan is None:
         return {"error": "No workout plan has been built yet."}
 
@@ -24,6 +24,7 @@ def log_last_workout(notes=None, history_file=DEFAULT_HISTORY_FILE):
         "logged_at": datetime.now(timezone.utc).isoformat(),
         "plan": wger_client._last_plan,
         "notes": notes,
+        "sets": sets or [],
     }
 
     history = _read_history(history_file)
@@ -54,3 +55,13 @@ def get_exercise_progress(exercise_name, history_file=DEFAULT_HISTORY_FILE):
                 if exercise.get("name") == exercise_name:
                     times_logged += 1
     return times_logged
+
+
+def get_last_performance(exercise_name, history_file=DEFAULT_HISTORY_FILE):
+    """Return the most recently logged {weight, reps} for an exercise, or None."""
+    history = _read_history(history_file)
+    for entry in reversed(history):
+        for set_entry in entry.get("sets", []):
+            if set_entry.get("exercise") == exercise_name:
+                return {"weight": set_entry.get("weight"), "reps": set_entry.get("reps")}
+    return None

@@ -449,3 +449,189 @@ class TestBuildWorkoutPlanProgression:
             )
             content = out_file.read_text()
             assert "Logged once before" in content
+
+    def test_real_progression_note_from_logged_sets(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [
+                    {
+                        "plan": [{"muscle_group": "chest", "exercises": [{"name": "Bench Press"}]}],
+                        "sets": [{"exercise": "Bench Press", "weight": 135, "reps": 8}],
+                    }
+                ]
+            )
+        )
+        exercises = _exerciseinfo(["Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            plan = wger_client.build_workout_plan(
+                ["chest"], exercises_per_muscle=1, history_file=history_file
+            )
+            assert "Last time: 135 x 8 reps" in plan[0]["exercises"][0]["progression"]
+
+    def test_real_progression_note_weight_only(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [
+                    {
+                        "plan": [{"muscle_group": "chest", "exercises": [{"name": "Bench Press"}]}],
+                        "sets": [{"exercise": "Bench Press", "weight": 135}],
+                    }
+                ]
+            )
+        )
+        exercises = _exerciseinfo(["Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            plan = wger_client.build_workout_plan(
+                ["chest"], exercises_per_muscle=1, history_file=history_file
+            )
+            assert "Last time: 135" in plan[0]["exercises"][0]["progression"]
+
+    def test_real_progression_note_reps_only(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [
+                    {
+                        "plan": [{"muscle_group": "chest", "exercises": [{"name": "Bench Press"}]}],
+                        "sets": [{"exercise": "Bench Press", "reps": 8}],
+                    }
+                ]
+            )
+        )
+        exercises = _exerciseinfo(["Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            plan = wger_client.build_workout_plan(
+                ["chest"], exercises_per_muscle=1, history_file=history_file
+            )
+            assert "Last time: 8 reps" in plan[0]["exercises"][0]["progression"]
+
+
+class TestSubstituteExercise:
+    def test_returns_error_when_no_plan_built(self):
+        wger_client._last_plan = None
+        assert wger_client.substitute_exercise("Bench Press") == {
+            "error": "No workout plan has been built yet."
+        }
+
+    def test_returns_error_when_exercise_not_in_plan(self):
+        wger_client._last_plan = [{"muscle_group": "chest", "exercises": [{"name": "Bench Press"}]}]
+        result = wger_client.substitute_exercise("Squat")
+        assert result == {"error": "Squat isn't in your current plan."}
+
+    def test_replaces_exercise_with_alternative(self):
+        wger_client._last_plan = [
+            {
+                "muscle_group": "chest",
+                "exercises": [{"name": "Bench Press", "sets": 3, "reps": "8-12", "rest_seconds": 90}],
+            }
+        ]
+        exercises = _exerciseinfo(["Bench Press", "Dips"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            result = wger_client.substitute_exercise("Bench Press")
+
+        assert result["replaced"] == "Bench Press"
+        assert result["with"]["name"] == "Dips"
+        assert result["with"]["sets"] == 3
+        assert wger_client._last_plan[0]["exercises"][0]["name"] == "Dips"
+
+    def test_returns_error_when_no_alternative_available(self):
+        wger_client._last_plan = [
+            {"muscle_group": "chest", "exercises": [{"name": "Bench Press", "sets": 3}]}
+        ]
+        exercises = _exerciseinfo(["Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            result = wger_client.substitute_exercise("Bench Press")
+
+        assert result == {"error": "No alternative found for Bench Press."}
+
+    def test_is_case_insensitive_on_exercise_name(self):
+        wger_client._last_plan = [
+            {"muscle_group": "chest", "exercises": [{"name": "Bench Press", "sets": 3}]}
+        ]
+        exercises = _exerciseinfo(["Bench Press", "Dips"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            result = wger_client.substitute_exercise("bench press")
+
+        assert result["replaced"] == "Bench Press"
+
+    def test_returns_error_dict_when_alternative_lookup_fails(self):
+        wger_client._last_plan = [
+            {"muscle_group": "chest", "exercises": [{"name": "Bench Press", "sets": 3}]}
+        ]
+        with patch.object(
+            wger_client.requests, "get", side_effect=wger_client.requests.RequestException("down")
+        ):
+            result = wger_client.substitute_exercise("Bench Press")
+
+        assert "error" in result
+
+
+class TestBuildProgram:
+    def test_builds_flat_plan_tagged_with_day(self, tmp_path):
+        chest = _exerciseinfo(["Bench Press"])
+        biceps = _exerciseinfo(["Row"])
+        responses = [_response(MUSCLES), _response(chest), _response(biceps)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            program = wger_client.build_program(
+                [
+                    {"day": "Push", "muscle_groups": ["chest"]},
+                    {"day": "Pull", "muscle_groups": ["biceps"]},
+                ],
+                exercises_per_muscle=1,
+                history_file=tmp_path / "history.json",
+            )
+
+        assert program[0]["day"] == "Push"
+        assert program[0]["exercises"][0]["name"] == "Bench Press"
+        assert program[1]["day"] == "Pull"
+        assert program[1]["exercises"][0]["name"] == "Row"
+
+    def test_sets_last_plan_for_logging(self, tmp_path):
+        exercises = _exerciseinfo(["Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            program = wger_client.build_program(
+                [{"day": "Push", "muscle_groups": ["chest"]}],
+                exercises_per_muscle=1,
+                history_file=tmp_path / "history.json",
+            )
+
+        assert wger_client._last_plan == program
+
+    def test_save_to_markdown_groups_by_day(self, tmp_path):
+        exercises = _exerciseinfo(["Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        out_file = tmp_path / "program.md"
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            wger_client.build_program(
+                [{"day": "Push", "muscle_groups": ["chest"]}],
+                exercises_per_muscle=1,
+                save_to=str(out_file),
+                history_file=tmp_path / "history.json",
+            )
+
+        content = out_file.read_text()
+        assert "## Push: Chest" in content
+
+    def test_save_error_is_reported(self, tmp_path):
+        exercises = _exerciseinfo(["Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        out_file = tmp_path / "program.json"
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            with patch.object(wger_client.Path, "write_text", side_effect=OSError("disk full")):
+                result = wger_client.build_program(
+                    [{"day": "Push", "muscle_groups": ["chest"]}],
+                    exercises_per_muscle=1,
+                    save_to=str(out_file),
+                    history_file=tmp_path / "history.json",
+                )
+                assert "save_error" in result
+                assert "disk full" in result["save_error"]

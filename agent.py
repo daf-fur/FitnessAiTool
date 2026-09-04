@@ -32,7 +32,13 @@ SYSTEM_PROMPT = (
     "build_workout_plan whenever those aren't specified in the current request. "
     "Call update_profile whenever the user states a lasting preference — equipment "
     "they own, a training goal, or an exercise/muscle to avoid — so it's remembered "
-    "next time. Use get_profile if the user asks what's saved."
+    "next time. Use get_profile if the user asks what's saved. Use build_program "
+    "instead of build_workout_plan when the user wants a multi-day split (e.g. push/"
+    "pull/legs). If the user wants to swap out one exercise in the current plan "
+    "(injury, dislike, no equipment), call substitute_exercise rather than rebuilding "
+    "the whole plan. When logging a completed workout, if the user mentions actual "
+    "weights or reps, pass them to log_last_workout as sets so future progression "
+    "tips are based on real numbers instead of a generic nudge."
 )
 
 AVAILABLE_FUNCTIONS = tools.build_dispatch(

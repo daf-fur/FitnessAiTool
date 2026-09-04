@@ -1,4 +1,5 @@
 import json
+from unittest.mock import patch
 
 import pytest
 
@@ -6,11 +7,41 @@ import tools
 import wger_client
 
 
+def _response(json_data):
+    class FakeResponse:
+        def raise_for_status(self):
+            pass
+
+        def json(self):
+            return json_data
+
+    return FakeResponse()
+
+
+MUSCLES = {"results": [{"id": 10, "name": "Pectoralis major", "name_en": "Chest"}]}
+
+
+def _exerciseinfo(names):
+    return {
+        "results": [
+            {
+                "translations": [{"language": wger_client.ENGLISH_LANGUAGE_ID, "name": name}],
+                "category": {"name": "Chest"},
+            }
+            for name in names
+        ]
+    }
+
+
 @pytest.fixture(autouse=True)
 def reset_last_plan():
     wger_client._last_plan = None
+    wger_client._muscle_cache = None
+    wger_client._equipment_cache = None
     yield
     wger_client._last_plan = None
+    wger_client._muscle_cache = None
+    wger_client._equipment_cache = None
 
 
 class TestBuildDispatch:
@@ -55,3 +86,32 @@ class TestBuildDispatch:
         dispatch = tools.build_dispatch(tmp_path / "profile.json", tmp_path / "history.json")
         assert dispatch["find_muscle_id"] is wger_client.find_muscle_id
         assert dispatch["find_equipment_id"] is wger_client.find_equipment_id
+
+    def test_substitute_exercise_uses_bound_profile(self, tmp_path):
+        profile_file = tmp_path / "profile.json"
+        profile_file.write_text(json.dumps({"exclusions": ["Dips"]}))
+        history_file = tmp_path / "history.json"
+        wger_client._last_plan = [
+            {"muscle_group": "chest", "exercises": [{"name": "Bench Press", "sets": 3}]}
+        ]
+
+        responses = [_response(MUSCLES), _response(_exerciseinfo(["Dips", "Push-up"]))]
+        dispatch = tools.build_dispatch(profile_file, history_file)
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            result = dispatch["substitute_exercise"](exercise_name="Bench Press")
+
+        assert result["with"]["name"] == "Push-up"
+
+    def test_build_program_writes_to_bound_history(self, tmp_path):
+        profile_file = tmp_path / "profile.json"
+        history_file = tmp_path / "history.json"
+
+        responses = [_response(MUSCLES), _response(_exerciseinfo(["Bench Press"]))]
+        dispatch = tools.build_dispatch(profile_file, history_file)
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            dispatch["build_program"](days=[{"day": "Push", "muscle_groups": ["chest"]}])
+        dispatch["log_last_workout"]()
+
+        assert history_file.exists()
+        saved = json.loads(history_file.read_text())
+        assert saved[0]["plan"][0]["day"] == "Push"

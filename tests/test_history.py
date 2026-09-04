@@ -30,6 +30,23 @@ class TestLogLastWorkout:
         saved = json.loads(history_file.read_text())
         assert saved == [entry]
 
+    def test_logs_sets_when_given(self, tmp_path):
+        wger_client._last_plan = [{"muscle_group": "chest", "exercises": []}]
+        history_file = tmp_path / "history.json"
+        sets = [{"exercise": "Bench Press", "weight": 135, "reps": 8}]
+
+        entry = history.log_last_workout(sets=sets, history_file=history_file)
+
+        assert entry["sets"] == sets
+
+    def test_defaults_sets_to_empty_list(self, tmp_path):
+        wger_client._last_plan = [{"muscle_group": "chest", "exercises": []}]
+        history_file = tmp_path / "history.json"
+
+        entry = history.log_last_workout(history_file=history_file)
+
+        assert entry["sets"] == []
+
     def test_creates_parent_directory(self, tmp_path):
         wger_client._last_plan = [{"muscle_group": "chest", "exercises": []}]
         history_file = tmp_path / "nested" / "dir" / "history.json"
@@ -121,3 +138,37 @@ class TestGetExerciseProgress:
         )
 
         assert history.get_exercise_progress("Squat", history_file=history_file) == 0
+
+
+class TestGetLastPerformance:
+    def test_returns_none_when_no_history(self, tmp_path):
+        history_file = tmp_path / "missing.json"
+        assert history.get_last_performance("Bench Press", history_file=history_file) is None
+
+    def test_returns_none_when_exercise_never_logged_with_sets(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(json.dumps([{"plan": [], "sets": []}]))
+        assert history.get_last_performance("Bench Press", history_file=history_file) is None
+
+    def test_returns_most_recent_logged_performance(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [
+                    {"plan": [], "sets": [{"exercise": "Bench Press", "weight": 125, "reps": 8}]},
+                    {"plan": [], "sets": [{"exercise": "Bench Press", "weight": 135, "reps": 6}]},
+                ]
+            )
+        )
+
+        result = history.get_last_performance("Bench Press", history_file=history_file)
+
+        assert result == {"weight": 135, "reps": 6}
+
+    def test_ignores_other_exercises(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps([{"plan": [], "sets": [{"exercise": "Squat", "weight": 185, "reps": 5}]}])
+        )
+
+        assert history.get_last_performance("Bench Press", history_file=history_file) is None

@@ -146,9 +146,18 @@ def lookup_exercise(muscle_group, equipment=None, limit=5, profile_file=None):
     return results
 
 
-def _progression_note(times_logged):
+def _progression_note(times_logged, last_performance=None):
     if times_logged == 0:
         return None
+    if last_performance:
+        weight = last_performance.get("weight")
+        reps = last_performance.get("reps")
+        if weight is not None and reps is not None:
+            return f"Last time: {weight} x {reps} reps — try adding weight or a rep this time."
+        if weight is not None:
+            return f"Last time: {weight} — try adding a bit more weight this time."
+        if reps is not None:
+            return f"Last time: {reps} reps — try adding a rep this time."
     if times_logged == 1:
         return "Logged once before — try adding a rep or a bit more weight this time."
     return f"Logged {times_logged} times before — keep pushing weight or reps if it's felt easy."
@@ -157,7 +166,10 @@ def _progression_note(times_logged):
 def _plan_to_markdown(plan):
     lines = ["# Workout Plan", ""]
     for entry in plan:
-        lines.append(f"## {entry['muscle_group'].title()}")
+        header = f"## {entry['muscle_group'].title()}"
+        if entry.get("day"):
+            header = f"## {entry['day']}: {entry['muscle_group'].title()}"
+        lines.append(header)
         if "error" in entry:
             lines.append(f"- Error: {entry['error']}")
         else:
@@ -212,7 +224,8 @@ def build_workout_plan(
         for exercise in selected:
             exercise.update(scheme)
             times_logged = history_module.get_exercise_progress(exercise["name"], **history_kwargs)
-            note = _progression_note(times_logged)
+            last_performance = history_module.get_last_performance(exercise["name"], **history_kwargs)
+            note = _progression_note(times_logged, last_performance)
             if note:
                 exercise["progression"] = note
 
@@ -233,3 +246,84 @@ def build_workout_plan(
         return {"plan": plan, "save_error": f"Failed to save plan to {save_to}: {error}"}
 
     return {"plan": plan, "saved_to": str(path)}
+
+
+def substitute_exercise(exercise_name, equipment=None, profile_file=None):
+    if _last_plan is None:
+        return {"error": "No workout plan has been built yet."}
+
+    used_names = {
+        exercise["name"] for entry in _last_plan for exercise in entry.get("exercises", [])
+    }
+
+    for entry in _last_plan:
+        exercises = entry.get("exercises", [])
+        for index, exercise in enumerate(exercises):
+            if exercise["name"].lower() != exercise_name.lower():
+                continue
+
+            muscle_group = entry["muscle_group"]
+            candidates = lookup_exercise(
+                muscle_group, equipment=equipment, limit=10, profile_file=profile_file
+            )
+            if isinstance(candidates, dict):
+                return candidates
+
+            replacement = next((c for c in candidates if c["name"] not in used_names), None)
+            if replacement is None:
+                return {"error": f"No alternative found for {exercise_name}."}
+
+            for key in ("sets", "reps", "rest_seconds"):
+                if key in exercise:
+                    replacement[key] = exercise[key]
+
+            exercises[index] = replacement
+            return {"replaced": exercise["name"], "with": replacement, "muscle_group": muscle_group}
+
+    return {"error": f"{exercise_name} isn't in your current plan."}
+
+
+def build_program(
+    days,
+    exercises_per_muscle=3,
+    equipment=None,
+    goal=None,
+    save_to=None,
+    history_file=None,
+    profile_file=None,
+):
+    """Build a multi-day program. `days` is a list of {"day": str, "muscle_groups": [str, ...]}."""
+    flat_plan = []
+
+    for day in days:
+        day_name = day.get("day", "Day")
+        day_plan = build_workout_plan(
+            day.get("muscle_groups", []),
+            exercises_per_muscle=exercises_per_muscle,
+            equipment=equipment,
+            goal=goal,
+            history_file=history_file,
+            profile_file=profile_file,
+        )
+        for entry in day_plan:
+            entry["day"] = day_name
+            flat_plan.append(entry)
+
+    global _last_plan
+    _last_plan = flat_plan
+
+    if not save_to:
+        return flat_plan
+
+    path = Path(save_to)
+    if path.suffix.lower() == ".md":
+        content = _plan_to_markdown(flat_plan)
+    else:
+        content = json.dumps(flat_plan, indent=2)
+    try:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(content, encoding="utf-8")
+    except OSError as error:
+        return {"plan": flat_plan, "save_error": f"Failed to save program to {save_to}: {error}"}
+
+    return {"plan": flat_plan, "saved_to": str(path)}

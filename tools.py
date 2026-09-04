@@ -136,6 +136,24 @@ TOOLS = [
             "parameters": {
                 "type": "object",
                 "properties": {
+                    "sets": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "exercise": {"type": "string", "description": "Exercise name."},
+                                "weight": {"type": "number", "description": "Weight used, if any."},
+                                "reps": {"type": "number", "description": "Reps completed, if known."},
+                            },
+                            "required": ["exercise"],
+                        },
+                        "description": (
+                            "Optional actual performance per exercise (weight/reps) from the workout "
+                            "just completed. If the user mentions what they actually lifted, pass it "
+                            "here — it produces a specific 'last time you did X' progression tip next "
+                            "time instead of a generic one."
+                        ),
+                    },
                     "notes": {
                         "type": "string",
                         "description": "Optional notes about how the workout went.",
@@ -224,6 +242,88 @@ TOOLS = [
             },
         },
     },
+    {
+        "type": "function",
+        "function": {
+            "name": "build_program",
+            "description": (
+                "Build a multi-day training program (e.g. a push/pull/legs split, or an "
+                "upper/lower split) in one call. Each day gets its own set of muscle groups "
+                "and is built the same way build_workout_plan builds a single day — including "
+                "equipment/goal defaults from the profile and progression tips."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "days": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "day": {
+                                    "type": "string",
+                                    "description": "Label for this day, e.g. 'Push', 'Day 1', 'Upper'.",
+                                },
+                                "muscle_groups": {
+                                    "type": "array",
+                                    "items": {"type": "string"},
+                                },
+                            },
+                            "required": ["day", "muscle_groups"],
+                        },
+                        "description": "One entry per training day, in order.",
+                    },
+                    "exercises_per_muscle": {
+                        "type": "integer",
+                        "description": "How many exercises to include per muscle group per day (default 3).",
+                    },
+                    "equipment": {
+                        "type": "string",
+                        "description": "Optional equipment filter applied across every day.",
+                    },
+                    "goal": {
+                        "type": "string",
+                        "enum": ["strength", "hypertrophy", "endurance"],
+                        "description": "Training goal applied across every day. Defaults to hypertrophy.",
+                    },
+                    "save_to": {
+                        "type": "string",
+                        "description": (
+                            "Optional file path to save the program to. Use '.md' for readable "
+                            "markdown, any other extension (e.g. '.json') for JSON."
+                        ),
+                    },
+                },
+                "required": ["days"],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "substitute_exercise",
+            "description": (
+                "Swap one exercise in the most recently built plan for an alternative that "
+                "targets the same muscle group, e.g. when the user can't or doesn't want to do "
+                "it (injury, disliked exercise, no equipment). Fails if no plan has been built "
+                "yet, the exercise isn't in the current plan, or no alternative is found."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "exercise_name": {
+                        "type": "string",
+                        "description": "The exact exercise name to replace, as it appears in the plan.",
+                    },
+                    "equipment": {
+                        "type": "string",
+                        "description": "Optional equipment filter for the replacement.",
+                    },
+                },
+                "required": ["exercise_name"],
+            },
+        },
+    },
 ]
 
 
@@ -236,6 +336,10 @@ def build_dispatch(profile_file, history_file):
         "build_workout_plan": partial(
             wger_client.build_workout_plan, profile_file=profile_file, history_file=history_file
         ),
+        "build_program": partial(
+            wger_client.build_program, profile_file=profile_file, history_file=history_file
+        ),
+        "substitute_exercise": partial(wger_client.substitute_exercise, profile_file=profile_file),
         "log_last_workout": partial(history.log_last_workout, history_file=history_file),
         "get_workout_history": partial(history.get_workout_history, history_file=history_file),
         "get_profile": partial(user_profile.get_profile, profile_file=profile_file),
