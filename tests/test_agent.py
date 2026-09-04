@@ -101,6 +101,34 @@ class TestRunTurn:
         assert mock_create.call_count == agent.MAX_TOOL_ITERATIONS + 1
         assert len(stub_calls) == agent.MAX_TOOL_ITERATIONS
 
+    def test_uses_explicit_available_functions_over_global(self):
+        tool_call = FakeToolCall("call_1", "lookup_exercise", '{"muscle_group": "chest"}')
+        first = FakeMessage(tool_calls=[tool_call])
+        second = FakeMessage(content="done")
+        messages = [{"role": "user", "content": "chest exercises"}]
+
+        stub = lambda muscle_group: ["explicit"]  # noqa: E731
+        explicit_functions = {"lookup_exercise": stub}
+
+        with patch.object(
+            agent.client.chat.completions, "create", side_effect=_create_side_effect([first, second])
+        ):
+            agent.run_turn(messages, available_functions=explicit_functions)
+
+        tool_messages = [m for m in messages if isinstance(m, dict) and m.get("role") == "tool"]
+        assert "explicit" in tool_messages[0]["content"]
+
+    def test_uses_explicit_model_over_global(self):
+        reply = FakeMessage(content="hi")
+        messages = [{"role": "user", "content": "hi"}]
+
+        with patch.object(
+            agent.client.chat.completions, "create", side_effect=_create_side_effect([reply])
+        ) as mock_create:
+            agent.run_turn(messages, model="gpt-4o")
+
+        assert mock_create.call_args.kwargs["model"] == "gpt-4o"
+
 
 class TestRunAgent:
     def test_builds_system_and_user_messages(self):

@@ -52,15 +52,18 @@ AVAILABLE_FUNCTIONS = tools.build_dispatch(
 )
 
 
-def run_turn(messages):
-    response = client.chat.completions.create(model=MODEL, messages=messages, tools=TOOLS)
+def run_turn(messages, available_functions=None, model=None):
+    functions = available_functions if available_functions is not None else AVAILABLE_FUNCTIONS
+    model = model if model is not None else MODEL
+
+    response = client.chat.completions.create(model=model, messages=messages, tools=TOOLS)
     message = response.choices[0].message
 
     iterations = 0
     while message.tool_calls and iterations < MAX_TOOL_ITERATIONS:
         messages.append(message)
         for tool_call in message.tool_calls:
-            function = AVAILABLE_FUNCTIONS[tool_call.function.name]
+            function = functions[tool_call.function.name]
             arguments = json.loads(tool_call.function.arguments)
             result = function(**arguments)
             messages.append(
@@ -71,7 +74,7 @@ def run_turn(messages):
                 }
             )
 
-        response = client.chat.completions.create(model=MODEL, messages=messages, tools=TOOLS)
+        response = client.chat.completions.create(model=model, messages=messages, tools=TOOLS)
         message = response.choices[0].message
         iterations += 1
 

@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fitness Agent</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app-shell">
+  <aside class="orientation" aria-label="Fitness Agent overview">
+    <div class="brand-lockup">
+      <span class="brand-mark" aria-hidden="true">+</span>
+      <div>
+        <p class="eyebrow">Personal training desk</p>
+        <h1>Fitness Agent</h1>
+      </div>
+    </div>
+    <div class="rail-note">
+      <span class="signal-dot" aria-hidden="true"></span>
+      <div><strong>Grounded guidance</strong><span>Plans built from real exercise data.</span></div>
+    </div>
+    <div class="rail-footer"><span>SESSION</span><span class="session-label">READY TO TRAIN</span></div>
+  </aside>
+
+  <main class="workspace">
+    <header class="topbar">
+      <div class="mobile-brand"><span class="brand-mark" aria-hidden="true">+</span><span>Fitness Agent</span></div>
+      <label class="identity-field"><span>Your profile</span><input id="user" type="text" placeholder="your name" autocomplete="off"></label>
+      <button id="reset" class="quiet-button" type="button">Reset session</button>
+    </header>
+
+    <section class="conversation" aria-label="Conversation">
+      <div class="conversation-heading">
+        <div><p class="eyebrow">Open coaching session</p><h2>What are we training today?</h2></div>
+        <span class="live-status"><span class="signal-dot" aria-hidden="true"></span> Online</span>
+      </div>
+      <div class="starter-prompts" aria-label="Starter prompts">
+        <button type="button" data-prompt="Build me a strength-focused push day">Build a push day</button>
+        <button type="button" data-prompt="Give me bodyweight exercises for my legs">Bodyweight legs</button>
+        <button type="button" data-prompt="What have I done recently?">Review my history</button>
+      </div>
+      <div id="messages" aria-live="polite" aria-label="Chat messages"></div>
+    </section>
+
+    <form id="composer">
+      <label class="composer-field"><span class="sr-only">Message Fitness Agent</span><input id="input" type="text" placeholder="Ask for a plan, a swap, or a progress check…" autocomplete="off"></label>
+      <button id="send" class="send-button" type="submit"><span>Send</span><span aria-hidden="true">↗</span></button>
+    </form>
+    <p class="composer-hint">Your profile and workout history stay scoped to your name.</p>
+  </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>

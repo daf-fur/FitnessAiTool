@@ -73,6 +73,22 @@ Here are two bodyweight exercises for the chest:
 These exercises effectively target the chest muscles using just your body weight! Let me know if you need more information or additional exercises.
 ```
 
+## Web frontend
+
+A small FastAPI server (`server.py`) wraps the same agent logic behind a browser chat UI in `public/` (`index.html`, `style.css`, `app.js`) — no build step, no framework.
+
+```
+uvicorn server:app --reload      # dev
+fitness-agent-server             # after pip install -e ., runs via uvicorn on $PORT (default 8000)
+```
+
+Open `http://localhost:8000`. Enter a name (same role as the CLI's `--user` — it's what scopes your profile/history) and start chatting; a "Reset chat" button clears the conversation.
+
+Notes:
+- The OpenAI key never leaves the server — the browser only ever talks to `/api/chat` and `/api/reset`.
+- Conversation state is kept in memory, keyed by a `session_id` the browser generates and stores in `localStorage`. This is single-process and doesn't survive a server restart — a deliberate tradeoff for shipping quickly, not a bug, but not something to point multiple server instances (e.g. behind a load balancer) at.
+- `PORT` is read from the environment so it runs as-is on typical PaaS targets (Render/Railway/Fly) without extra config.
+
 ## How it works
 
 - `agent.py` — the chat loop, sends messages to the configured model with tool-calling enabled; resolves the current user and binds the tool dispatch table to their profile/history files
@@ -81,6 +97,7 @@ These exercises effectively target the chest muscles using just your body weight
 - `history.py` — logs workouts to a per-user `workout_history.json`, supports editing/deleting entries, and archives old entries once the active file gets large
 - `user_profile.py` — saves default equipment, default goal, and exercise/injury exclusions to a per-user `user_profile.json`
 - `paths.py` — resolves which user is running the session and maps them to `data/<user>/user_profile.json` and `data/<user>/workout_history.json`
+- `server.py` — FastAPI app for the web frontend; keeps per-session conversation state in memory and calls `agent.run_turn` explicitly per request (not via the CLI's global state) so concurrent users don't interfere with each other
 
 Tools available to the model:
 - `lookup_exercise(muscle_group, equipment=None)`

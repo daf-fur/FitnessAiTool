@@ -13,13 +13,16 @@ dependencies = [
     "requests",
     "python-dotenv",
     "openai",
+    "fastapi",
+    "uvicorn",
 ]
 
 [project.scripts]
 fitness-agent = "agent:main"
+fitness-agent-server = "server:main"
 
 [tool.setuptools]
-py-modules = ["agent", "tools", "wger_client", "history", "user_profile", "paths"]
+py-modules = ["agent", "tools", "wger_client", "history", "user_profile", "paths", "server"]
 
 [tool.ruff]
 line-length = 110
