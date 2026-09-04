@@ -46,3 +46,26 @@ class TestUserPaths:
 
     def test_different_users_get_different_paths(self):
         assert paths.profile_path("alice") != paths.profile_path("bob")
+
+
+class TestListUsers:
+    def test_returns_empty_list_when_no_data_dir(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(paths, "DATA_DIR", tmp_path / "missing")
+        assert paths.list_users() == []
+
+    def test_lists_user_directories_sorted(self, tmp_path, monkeypatch):
+        data_dir = tmp_path / "data"
+        (data_dir / "bob").mkdir(parents=True)
+        (data_dir / "alice").mkdir(parents=True)
+        monkeypatch.setattr(paths, "DATA_DIR", data_dir)
+
+        assert paths.list_users() == ["alice", "bob"]
+
+    def test_ignores_non_directory_entries(self, tmp_path, monkeypatch):
+        data_dir = tmp_path / "data"
+        data_dir.mkdir()
+        (data_dir / "alice").mkdir()
+        (data_dir / "stray.txt").write_text("noise")
+        monkeypatch.setattr(paths, "DATA_DIR", data_dir)
+
+        assert paths.list_users() == ["alice"]

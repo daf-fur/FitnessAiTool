@@ -21,6 +21,17 @@ def get_profile(profile_file=DEFAULT_PROFILE_FILE):
     return profile
 
 
+def _write_profile(profile, profile_file):
+    try:
+        profile_file.parent.mkdir(parents=True, exist_ok=True)
+        tmp_file = profile_file.with_name(profile_file.name + ".tmp")
+        tmp_file.write_text(json.dumps(profile, indent=2), encoding="utf-8")
+        tmp_file.replace(profile_file)
+    except OSError as error:
+        return f"Failed to save profile: {error}"
+    return None
+
+
 def update_profile(
     equipment=None, goal=None, add_exclusions=None, remove_exclusions=None, profile_file=DEFAULT_PROFILE_FILE
 ):
@@ -39,10 +50,19 @@ def update_profile(
         exclusions = {term for term in exclusions if term.lower() not in removal}
     profile["exclusions"] = sorted(exclusions)
 
-    try:
-        profile_file.parent.mkdir(parents=True, exist_ok=True)
-        profile_file.write_text(json.dumps(profile, indent=2), encoding="utf-8")
-    except OSError as error:
-        return {"error": f"Failed to save profile: {error}"}
+    error = _write_profile(profile, profile_file)
+    if error:
+        return {"error": error}
+
+    return profile
+
+
+def reset_profile(profile_file=DEFAULT_PROFILE_FILE):
+    """Clear equipment, goal, and exclusions back to unset."""
+    profile = {"equipment": None, "goal": None, "exclusions": []}
+
+    error = _write_profile(profile, profile_file)
+    if error:
+        return {"error": error}
 
     return profile

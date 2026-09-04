@@ -115,3 +115,33 @@ class TestBuildDispatch:
         assert history_file.exists()
         saved = json.loads(history_file.read_text())
         assert saved[0]["plan"][0]["day"] == "Push"
+
+    def test_reset_profile_writes_to_bound_path(self, tmp_path):
+        profile_file = tmp_path / "profile.json"
+        history_file = tmp_path / "history.json"
+        profile_file.write_text(json.dumps({"equipment": "dumbbell", "goal": None, "exclusions": []}))
+
+        dispatch = tools.build_dispatch(profile_file, history_file)
+        result = dispatch["reset_profile"]()
+
+        assert result == {"equipment": None, "goal": None, "exclusions": []}
+
+    def test_update_workout_writes_to_bound_path(self, tmp_path):
+        profile_file = tmp_path / "profile.json"
+        history_file = tmp_path / "history.json"
+        history_file.write_text(json.dumps([{"logged_at": "t1", "notes": "old", "sets": []}]))
+
+        dispatch = tools.build_dispatch(profile_file, history_file)
+        dispatch["update_workout"](notes="new")
+
+        assert json.loads(history_file.read_text())[0]["notes"] == "new"
+
+    def test_delete_workout_writes_to_bound_path(self, tmp_path):
+        profile_file = tmp_path / "profile.json"
+        history_file = tmp_path / "history.json"
+        history_file.write_text(json.dumps([{"logged_at": "t1"}]))
+
+        dispatch = tools.build_dispatch(profile_file, history_file)
+        dispatch["delete_workout"]()
+
+        assert json.loads(history_file.read_text()) == []

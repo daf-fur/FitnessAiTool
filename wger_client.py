@@ -1,4 +1,5 @@
 import json
+import time
 from pathlib import Path
 
 import requests
@@ -7,6 +8,8 @@ import user_profile
 
 WGER_BASE_URL = "https://wger.de/api/v2"
 ENGLISH_LANGUAGE_ID = 2
+RETRY_ATTEMPTS = 2
+RETRY_BACKOFF_SECONDS = 0.1
 
 REP_SCHEMES = {
     "strength": {"sets": 5, "reps": "5", "rest_seconds": 180},
@@ -29,12 +32,26 @@ _equipment_cache = None
 _last_plan = None
 
 
+def _get(url, timeout=10):
+    """GET with a couple of retries on transient network errors before giving up."""
+    last_error = None
+    for attempt in range(RETRY_ATTEMPTS + 1):
+        try:
+            response = requests.get(url, timeout=timeout)
+            response.raise_for_status()
+            return response
+        except requests.RequestException as error:
+            last_error = error
+            if attempt < RETRY_ATTEMPTS:
+                time.sleep(RETRY_BACKOFF_SECONDS * (attempt + 1))
+    raise last_error
+
+
 def _get_muscles():
     global _muscle_cache
     if _muscle_cache is None:
         try:
-            response = requests.get(f"{WGER_BASE_URL}/muscle/?format=json&limit=50", timeout=10)
-            response.raise_for_status()
+            response = _get(f"{WGER_BASE_URL}/muscle/?format=json&limit=50")
         except requests.RequestException as error:
             return {"error": f"Failed to look up muscle groups: {error}"}
         _muscle_cache = response.json()["results"]
@@ -46,8 +63,7 @@ def _get_equipment():
     global _equipment_cache
     if _equipment_cache is None:
         try:
-            response = requests.get(f"{WGER_BASE_URL}/equipment/?format=json&limit=20", timeout=10)
-            response.raise_for_status()
+            response = _get(f"{WGER_BASE_URL}/equipment/?format=json&limit=20")
         except requests.RequestException as error:
             return {"error": f"Failed to look up equipment: {error}"}
         _equipment_cache = response.json()["results"]
@@ -127,8 +143,7 @@ def lookup_exercise(muscle_group, equipment=None, limit=5, profile_file=None):
         url += f"&equipment={equipment_id}"
 
     try:
-        response = requests.get(url, timeout=10)
-        response.raise_for_status()
+        response = _get(url)
     except requests.RequestException as error:
         return {"error": f"Failed to look up exercises: {error}"}
     data = response.json()
@@ -152,10 +167,12 @@ def _progression_note(times_logged, last_performance=None):
     if last_performance:
         weight = last_performance.get("weight")
         reps = last_performance.get("reps")
-        if weight is not None and reps is not None:
-            return f"Last time: {weight} x {reps} reps — try adding weight or a rep this time."
-        if weight is not None:
-            return f"Last time: {weight} — try adding a bit more weight this time."
+        unit = last_performance.get("unit")
+        weight_str = f"{weight} {unit}" if weight is not None and unit else weight
+        if weight_str is not None and reps is not None:
+            return f"Last time: {weight_str} x {reps} reps — try adding weight or a rep this time."
+        if weight_str is not None:
+            return f"Last time: {weight_str} — try adding a bit more weight this time."
         if reps is not None:
             return f"Last time: {reps} reps — try adding a rep this time."
     if times_logged == 1:

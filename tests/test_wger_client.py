@@ -54,6 +54,32 @@ def _exerciseinfo(names):
     }
 
 
+class TestGet:
+    def test_retries_and_recovers_after_transient_failure(self):
+        calls = [wger_client.requests.RequestException("blip"), _response(MUSCLES)]
+
+        def fake_get(*args, **kwargs):
+            result = calls.pop(0)
+            if isinstance(result, Exception):
+                raise result
+            return result
+
+        with patch.object(wger_client.requests, "get", side_effect=fake_get) as mock_get:
+            response = wger_client._get("http://example.com")
+
+        assert response.json() == MUSCLES
+        assert mock_get.call_count == 2
+
+    def test_gives_up_after_exhausting_retries(self):
+        with patch.object(
+            wger_client.requests, "get", side_effect=wger_client.requests.RequestException("down")
+        ) as mock_get:
+            with pytest.raises(wger_client.requests.RequestException):
+                wger_client._get("http://example.com")
+
+        assert mock_get.call_count == wger_client.RETRY_ATTEMPTS + 1
+
+
 class TestFindMuscleId:
     def test_matches_by_english_name(self):
         with patch.object(wger_client.requests, "get", return_value=_response(MUSCLES)):
@@ -134,16 +160,12 @@ class TestLookupExercise:
             assert result == [{"name": "Curl de bíceps", "category": "Arms"}]
 
     def test_returns_error_dict_when_equipment_lookup_fails(self):
-        responses = [
-            _response(MUSCLES),
-            wger_client.requests.RequestException("down"),
-        ]
+        responses = [_response(MUSCLES)]
 
         def fake_get(*args, **kwargs):
-            result = responses.pop(0)
-            if isinstance(result, Exception):
-                raise result
-            return result
+            if responses:
+                return responses.pop(0)
+            raise wger_client.requests.RequestException("down")
 
         with patch.object(wger_client.requests, "get", side_effect=fake_get):
             result = wger_client.lookup_exercise("chest", equipment="dumbbell")
@@ -159,13 +181,12 @@ class TestLookupExercise:
             assert "equipment=1" in mock_get.call_args_list[-1].args[0]
 
     def test_returns_error_dict_on_exerciseinfo_request_failure(self):
-        responses = [_response(MUSCLES), wger_client.requests.RequestException("down")]
+        responses = [_response(MUSCLES)]
 
         def fake_get(*args, **kwargs):
-            result = responses.pop(0)
-            if isinstance(result, Exception):
-                raise result
-            return result
+            if responses:
+                return responses.pop(0)
+            raise wger_client.requests.RequestException("down")
 
         with patch.object(wger_client.requests, "get", side_effect=fake_get):
             result = wger_client.lookup_exercise("chest")
@@ -469,6 +490,26 @@ class TestBuildWorkoutPlanProgression:
                 ["chest"], exercises_per_muscle=1, history_file=history_file
             )
             assert "Last time: 135 x 8 reps" in plan[0]["exercises"][0]["progression"]
+
+    def test_real_progression_note_includes_unit(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [
+                    {
+                        "plan": [{"muscle_group": "chest", "exercises": [{"name": "Bench Press"}]}],
+                        "sets": [{"exercise": "Bench Press", "weight": 135, "reps": 8, "unit": "lb"}],
+                    }
+                ]
+            )
+        )
+        exercises = _exerciseinfo(["Bench Press"])
+        responses = [_response(MUSCLES), _response(exercises)]
+        with patch.object(wger_client.requests, "get", side_effect=responses):
+            plan = wger_client.build_workout_plan(
+                ["chest"], exercises_per_muscle=1, history_file=history_file
+            )
+            assert "Last time: 135 lb x 8 reps" in plan[0]["exercises"][0]["progression"]
 
     def test_real_progression_note_weight_only(self, tmp_path):
         history_file = tmp_path / "history.json"

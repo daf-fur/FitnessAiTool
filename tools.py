@@ -144,14 +144,20 @@ TOOLS = [
                                 "exercise": {"type": "string", "description": "Exercise name."},
                                 "weight": {"type": "number", "description": "Weight used, if any."},
                                 "reps": {"type": "number", "description": "Reps completed, if known."},
+                                "unit": {
+                                    "type": "string",
+                                    "enum": ["lb", "kg"],
+                                    "description": "Unit the weight is in, if a weight is given.",
+                                },
                             },
                             "required": ["exercise"],
                         },
                         "description": (
-                            "Optional actual performance per exercise (weight/reps) from the workout "
-                            "just completed. If the user mentions what they actually lifted, pass it "
-                            "here — it produces a specific 'last time you did X' progression tip next "
-                            "time instead of a generic one."
+                            "Optional actual performance per exercise (weight/reps/unit) from the "
+                            "workout just completed. If the user mentions what they actually lifted, "
+                            "pass it here — it produces a specific 'last time you did X' progression "
+                            "tip next time instead of a generic one. Always include unit if a weight "
+                            "is given, so progression comparisons don't mix lb and kg."
                         ),
                     },
                     "notes": {
@@ -174,6 +180,68 @@ TOOLS = [
                     "limit": {
                         "type": "integer",
                         "description": "How many recent workouts to return (default 5).",
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "update_workout",
+            "description": (
+                "Edit a previously logged workout's notes or sets, e.g. to fix a typo'd weight. "
+                "Defaults to the most recently logged workout if logged_at isn't given — get it "
+                "from get_workout_history to target an older one."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "logged_at": {
+                        "type": "string",
+                        "description": (
+                            "Timestamp of the workout to edit, from get_workout_history's "
+                            "'logged_at' field. Omit to edit the most recent one."
+                        ),
+                    },
+                    "notes": {"type": "string", "description": "Replacement notes."},
+                    "sets": {
+                        "type": "array",
+                        "items": {
+                            "type": "object",
+                            "properties": {
+                                "exercise": {"type": "string"},
+                                "weight": {"type": "number"},
+                                "reps": {"type": "number"},
+                                "unit": {"type": "string", "enum": ["lb", "kg"]},
+                            },
+                            "required": ["exercise"],
+                        },
+                        "description": "Replacement sets (replaces the whole list, not a merge).",
+                    },
+                },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "delete_workout",
+            "description": (
+                "Delete a logged workout entirely, e.g. if it was logged by mistake. Defaults to "
+                "the most recently logged workout if logged_at isn't given."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {
+                    "logged_at": {
+                        "type": "string",
+                        "description": (
+                            "Timestamp of the workout to delete, from get_workout_history's "
+                            "'logged_at' field. Omit to delete the most recent one."
+                        ),
                     },
                 },
                 "required": [],
@@ -238,6 +306,22 @@ TOOLS = [
                         ),
                     },
                 },
+                "required": [],
+            },
+        },
+    },
+    {
+        "type": "function",
+        "function": {
+            "name": "reset_profile",
+            "description": (
+                "Clear the saved profile entirely — equipment, goal, and exclusions all go back "
+                "to unset. Use when the user asks to forget everything saved / start fresh, as "
+                "opposed to update_profile's targeted add/remove for one preference."
+            ),
+            "parameters": {
+                "type": "object",
+                "properties": {},
                 "required": [],
             },
         },
@@ -342,6 +426,9 @@ def build_dispatch(profile_file, history_file):
         "substitute_exercise": partial(wger_client.substitute_exercise, profile_file=profile_file),
         "log_last_workout": partial(history.log_last_workout, history_file=history_file),
         "get_workout_history": partial(history.get_workout_history, history_file=history_file),
+        "update_workout": partial(history.update_workout, history_file=history_file),
+        "delete_workout": partial(history.delete_workout, history_file=history_file),
         "get_profile": partial(user_profile.get_profile, profile_file=profile_file),
         "update_profile": partial(user_profile.update_profile, profile_file=profile_file),
+        "reset_profile": partial(user_profile.reset_profile, profile_file=profile_file),
     }

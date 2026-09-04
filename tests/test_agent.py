@@ -8,9 +8,11 @@ import paths
 
 @pytest.fixture(autouse=True)
 def restore_available_functions():
-    original = agent.AVAILABLE_FUNCTIONS
+    original_functions = agent.AVAILABLE_FUNCTIONS
+    original_model = agent.MODEL
     yield
-    agent.AVAILABLE_FUNCTIONS = original
+    agent.AVAILABLE_FUNCTIONS = original_functions
+    agent.MODEL = original_model
 
 
 class FakeFunction:
@@ -162,7 +164,7 @@ class TestMain:
         ):
             agent.main()
 
-        mock_chat.assert_called_once_with(user="alice")
+        mock_chat.assert_called_once_with(user="alice", model=None)
 
     def test_defaults_user_to_none(self):
         with (
@@ -171,7 +173,40 @@ class TestMain:
         ):
             agent.main()
 
-        mock_chat.assert_called_once_with(user=None)
+        mock_chat.assert_called_once_with(user=None, model=None)
+
+    def test_parses_model_flag_and_calls_chat(self):
+        with (
+            patch("sys.argv", ["fitness-agent", "--model", "gpt-4o"]),
+            patch.object(agent, "chat") as mock_chat,
+        ):
+            agent.main()
+
+        mock_chat.assert_called_once_with(user=None, model="gpt-4o")
+
+    def test_list_users_prints_and_skips_chat(self, capsys):
+        with (
+            patch("sys.argv", ["fitness-agent", "--list-users"]),
+            patch.object(agent.paths, "list_users", return_value=["alice", "bob"]),
+            patch.object(agent, "chat") as mock_chat,
+        ):
+            agent.main()
+
+        out = capsys.readouterr().out
+        assert "alice" in out
+        assert "bob" in out
+        mock_chat.assert_not_called()
+
+    def test_list_users_reports_when_empty(self, capsys):
+        with (
+            patch("sys.argv", ["fitness-agent", "--list-users"]),
+            patch.object(agent.paths, "list_users", return_value=[]),
+            patch.object(agent, "chat"),
+        ):
+            agent.main()
+
+        out = capsys.readouterr().out
+        assert "No saved users yet." in out
 
 
 class TestUserScoping:
@@ -208,3 +243,22 @@ class TestUserScoping:
 
         mock_build.assert_called_once_with(paths.profile_path("alice"), paths.history_path("alice"))
         assert agent.AVAILABLE_FUNCTIONS is sentinel
+
+    def test_run_agent_overrides_model_when_given(self):
+        with patch.object(agent, "run_turn", return_value="reply"):
+            agent.run_agent("hi", model="gpt-4o")
+
+        assert agent.MODEL == "gpt-4o"
+
+    def test_run_agent_leaves_model_unchanged_when_not_given(self):
+        original = agent.MODEL
+        with patch.object(agent, "run_turn", return_value="reply"):
+            agent.run_agent("hi")
+
+        assert agent.MODEL == original
+
+    def test_chat_overrides_model_when_given(self):
+        with patch("builtins.input", side_effect=["exit"]):
+            agent.chat(model="gpt-4o")
+
+        assert agent.MODEL == "gpt-4o"

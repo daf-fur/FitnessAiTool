@@ -1,5 +1,6 @@
 import argparse
 import json
+import os
 from importlib.metadata import PackageNotFoundError, version
 
 from dotenv import load_dotenv
@@ -13,7 +14,7 @@ load_dotenv()
 
 client = OpenAI()
 
-MODEL = "gpt-4o-mini"
+MODEL = os.environ.get("FITNESS_AGENT_MODEL", "gpt-4o-mini")
 MAX_TOOL_ITERATIONS = 5
 
 SYSTEM_PROMPT = (
@@ -37,8 +38,13 @@ SYSTEM_PROMPT = (
     "pull/legs). If the user wants to swap out one exercise in the current plan "
     "(injury, dislike, no equipment), call substitute_exercise rather than rebuilding "
     "the whole plan. When logging a completed workout, if the user mentions actual "
-    "weights or reps, pass them to log_last_workout as sets so future progression "
-    "tips are based on real numbers instead of a generic nudge."
+    "weights or reps, pass them to log_last_workout as sets — always include a unit "
+    "(lb or kg) with any weight, so progression comparisons don't mix units — so "
+    "future progression tips are based on real numbers instead of a generic nudge. "
+    "If the user wants to fix or remove a past log entry, use update_workout or "
+    "delete_workout (both default to the most recent entry if no timestamp is given). "
+    "Use reset_profile only if the user explicitly asks to clear/forget everything "
+    "saved; for removing one preference, use update_profile's remove_exclusions instead."
 )
 
 AVAILABLE_FUNCTIONS = tools.build_dispatch(
@@ -73,10 +79,12 @@ def run_turn(messages):
     return message.content
 
 
-def run_agent(user_message, user=None):
-    global AVAILABLE_FUNCTIONS
+def run_agent(user_message, user=None, model=None):
+    global AVAILABLE_FUNCTIONS, MODEL
     if user is not None:
         AVAILABLE_FUNCTIONS = tools.build_dispatch(paths.profile_path(user), paths.history_path(user))
+    if model is not None:
+        MODEL = model
 
     messages = [
         {"role": "system", "content": SYSTEM_PROMPT},
@@ -85,15 +93,17 @@ def run_agent(user_message, user=None):
     return run_turn(messages)
 
 
-def chat(user=None):
-    global AVAILABLE_FUNCTIONS
+def chat(user=None, model=None):
+    global AVAILABLE_FUNCTIONS, MODEL
     resolved_user = paths.resolve_user(user)
     AVAILABLE_FUNCTIONS = tools.build_dispatch(
         paths.profile_path(resolved_user), paths.history_path(resolved_user)
     )
+    if model is not None:
+        MODEL = model
 
     messages = [{"role": "system", "content": SYSTEM_PROMPT}]
-    print(f"Fitness agent ready for {resolved_user}. Type 'exit' or 'quit' to stop.")
+    print(f"Fitness agent ready for {resolved_user} (model: {MODEL}). Type 'exit' or 'quit' to stop.")
 
     while True:
         try:
@@ -130,9 +140,21 @@ def main():
     parser.add_argument(
         "--user", help="Profile/history identity to use (defaults to $FITNESS_AGENT_USER or your OS username)"
     )
+    parser.add_argument(
+        "--model", help="OpenAI model to use (defaults to $FITNESS_AGENT_MODEL or gpt-4o-mini)"
+    )
+    parser.add_argument(
+        "--list-users", action="store_true", help="List users with saved data on this install and exit"
+    )
     parser.add_argument("--version", action="version", version=f"fitness-agent {_version()}")
     args = parser.parse_args()
-    chat(user=args.user)
+
+    if args.list_users:
+        users = paths.list_users()
+        print("\n".join(users) if users else "No saved users yet.")
+        return
+
+    chat(user=args.user, model=args.model)
 
 
 if __name__ == "__main__":

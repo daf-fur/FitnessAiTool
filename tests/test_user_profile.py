@@ -75,3 +75,51 @@ class TestUpdateProfile:
 
         result = user_profile.update_profile(equipment="dumbbell", profile_file=profile_file)
         assert "error" in result
+
+    def test_original_file_untouched_when_write_fails(self, tmp_path, monkeypatch):
+        profile_file = tmp_path / "profile.json"
+        profile_file.write_text(json.dumps({"equipment": "barbell", "goal": None, "exclusions": []}))
+
+        def broken_write_text(self, *args, **kwargs):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(type(profile_file), "write_text", broken_write_text)
+
+        user_profile.update_profile(equipment="dumbbell", profile_file=profile_file)
+
+        assert json.loads(profile_file.read_text())["equipment"] == "barbell"
+        assert not (tmp_path / "profile.json.tmp").exists()
+
+
+class TestResetProfile:
+    def test_clears_saved_fields(self, tmp_path):
+        profile_file = tmp_path / "profile.json"
+        user_profile.update_profile(
+            equipment="dumbbell", goal="strength", add_exclusions=["Squat"], profile_file=profile_file
+        )
+
+        result = user_profile.reset_profile(profile_file=profile_file)
+
+        assert result == {"equipment": None, "goal": None, "exclusions": []}
+
+    def test_persists_the_reset(self, tmp_path):
+        profile_file = tmp_path / "profile.json"
+        user_profile.update_profile(equipment="dumbbell", profile_file=profile_file)
+        user_profile.reset_profile(profile_file=profile_file)
+
+        assert user_profile.get_profile(profile_file=profile_file) == {
+            "equipment": None,
+            "goal": None,
+            "exclusions": [],
+        }
+
+    def test_returns_error_when_write_fails(self, tmp_path, monkeypatch):
+        profile_file = tmp_path / "profile.json"
+
+        def broken_write_text(self, *args, **kwargs):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(type(profile_file), "write_text", broken_write_text)
+
+        result = user_profile.reset_profile(profile_file=profile_file)
+        assert "error" in result

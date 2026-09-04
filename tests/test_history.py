@@ -78,6 +78,21 @@ class TestLogLastWorkout:
         result = history.log_last_workout(history_file=history_file)
         assert "error" in result
 
+    def test_original_file_untouched_when_write_fails(self, tmp_path, monkeypatch):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(json.dumps([{"plan": "old"}]))
+        wger_client._last_plan = [{"muscle_group": "chest", "exercises": []}]
+
+        def broken_write_text(self, *args, **kwargs):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(type(history_file), "write_text", broken_write_text)
+
+        history.log_last_workout(history_file=history_file)
+
+        assert json.loads(history_file.read_text()) == [{"plan": "old"}]
+        assert not (tmp_path / "history.json.tmp").exists()
+
 
 class TestGetWorkoutHistory:
     def test_returns_empty_list_when_no_file(self, tmp_path):
@@ -163,7 +178,19 @@ class TestGetLastPerformance:
 
         result = history.get_last_performance("Bench Press", history_file=history_file)
 
-        assert result == {"weight": 135, "reps": 6}
+        assert result == {"weight": 135, "reps": 6, "unit": None}
+
+    def test_includes_unit_when_logged(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [{"plan": [], "sets": [{"exercise": "Bench Press", "weight": 135, "reps": 8, "unit": "lb"}]}]
+            )
+        )
+
+        result = history.get_last_performance("Bench Press", history_file=history_file)
+
+        assert result == {"weight": 135, "reps": 8, "unit": "lb"}
 
     def test_ignores_other_exercises(self, tmp_path):
         history_file = tmp_path / "history.json"
@@ -172,3 +199,194 @@ class TestGetLastPerformance:
         )
 
         assert history.get_last_performance("Bench Press", history_file=history_file) is None
+
+
+class TestUpdateWorkout:
+    def test_returns_error_when_no_history(self, tmp_path):
+        result = history.update_workout(notes="oops", history_file=tmp_path / "missing.json")
+        assert result == {"error": "No workout history to update."}
+
+    def test_updates_most_recent_when_no_timestamp_given(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [
+                    {"logged_at": "2026-01-01T00:00:00", "notes": "first", "sets": []},
+                    {"logged_at": "2026-01-02T00:00:00", "notes": "second", "sets": []},
+                ]
+            )
+        )
+
+        result = history.update_workout(notes="fixed", history_file=history_file)
+
+        assert result["notes"] == "fixed"
+        assert result["logged_at"] == "2026-01-02T00:00:00"
+        saved = json.loads(history_file.read_text())
+        assert saved[0]["notes"] == "first"
+        assert saved[1]["notes"] == "fixed"
+
+    def test_updates_entry_by_timestamp(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [
+                    {"logged_at": "2026-01-01T00:00:00", "notes": "first", "sets": []},
+                    {"logged_at": "2026-01-02T00:00:00", "notes": "second", "sets": []},
+                ]
+            )
+        )
+
+        result = history.update_workout(
+            logged_at="2026-01-01T00:00:00", notes="fixed", history_file=history_file
+        )
+
+        assert result["notes"] == "fixed"
+        saved = json.loads(history_file.read_text())
+        assert saved[0]["notes"] == "fixed"
+        assert saved[1]["notes"] == "second"
+
+    def test_returns_error_for_unknown_timestamp(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(json.dumps([{"logged_at": "2026-01-01T00:00:00", "notes": "first"}]))
+
+        result = history.update_workout(logged_at="nope", notes="fixed", history_file=history_file)
+
+        assert result == {"error": "No workout found with logged_at='nope'."}
+
+    def test_replaces_sets(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps([{"logged_at": "2026-01-01T00:00:00", "sets": [{"exercise": "Squat"}]}])
+        )
+        new_sets = [{"exercise": "Bench Press", "weight": 135, "reps": 8}]
+
+        result = history.update_workout(sets=new_sets, history_file=history_file)
+
+        assert result["sets"] == new_sets
+
+    def test_returns_error_when_write_fails(self, tmp_path, monkeypatch):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(json.dumps([{"logged_at": "2026-01-01T00:00:00", "notes": "old"}]))
+
+        def broken_write_text(self, *args, **kwargs):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(type(history_file), "write_text", broken_write_text)
+
+        result = history.update_workout(notes="new", history_file=history_file)
+        assert "error" in result
+
+
+class TestDeleteWorkout:
+    def test_returns_error_when_no_history(self, tmp_path):
+        result = history.delete_workout(history_file=tmp_path / "missing.json")
+        assert result == {"error": "No workout history to delete from."}
+
+    def test_deletes_most_recent_when_no_timestamp_given(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [
+                    {"logged_at": "2026-01-01T00:00:00"},
+                    {"logged_at": "2026-01-02T00:00:00"},
+                ]
+            )
+        )
+
+        result = history.delete_workout(history_file=history_file)
+
+        assert result["deleted"]["logged_at"] == "2026-01-02T00:00:00"
+        saved = json.loads(history_file.read_text())
+        assert len(saved) == 1
+        assert saved[0]["logged_at"] == "2026-01-01T00:00:00"
+
+    def test_deletes_entry_by_timestamp(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(
+            json.dumps(
+                [
+                    {"logged_at": "2026-01-01T00:00:00"},
+                    {"logged_at": "2026-01-02T00:00:00"},
+                ]
+            )
+        )
+
+        history.delete_workout(logged_at="2026-01-01T00:00:00", history_file=history_file)
+
+        saved = json.loads(history_file.read_text())
+        assert len(saved) == 1
+        assert saved[0]["logged_at"] == "2026-01-02T00:00:00"
+
+    def test_returns_error_for_unknown_timestamp(self, tmp_path):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(json.dumps([{"logged_at": "2026-01-01T00:00:00"}]))
+
+        result = history.delete_workout(logged_at="nope", history_file=history_file)
+
+        assert result == {"error": "No workout found with logged_at='nope'."}
+
+    def test_returns_error_when_write_fails(self, tmp_path, monkeypatch):
+        history_file = tmp_path / "history.json"
+        history_file.write_text(json.dumps([{"logged_at": "2026-01-01T00:00:00"}]))
+
+        def broken_write_text(self, *args, **kwargs):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(type(history_file), "write_text", broken_write_text)
+
+        result = history.delete_workout(history_file=history_file)
+        assert "error" in result
+
+
+class TestArchiveOverflow:
+    def test_no_archiving_below_threshold(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(history, "MAX_ACTIVE_ENTRIES", 3)
+        history_file = tmp_path / "history.json"
+        history_file.write_text(json.dumps([{"logged_at": str(i)} for i in range(2)]))
+        wger_client._last_plan = [{"muscle_group": "chest", "exercises": []}]
+
+        history.log_last_workout(history_file=history_file)
+
+        assert len(json.loads(history_file.read_text())) == 3
+        assert not history._archive_path(history_file).exists()
+
+    def test_archives_oldest_entries_once_over_threshold(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(history, "MAX_ACTIVE_ENTRIES", 2)
+        history_file = tmp_path / "history.json"
+        history_file.write_text(json.dumps([{"logged_at": str(i)} for i in range(3)]))
+        wger_client._last_plan = [{"muscle_group": "chest", "exercises": []}]
+
+        history.log_last_workout(history_file=history_file)
+
+        active = json.loads(history_file.read_text())
+        assert len(active) == 2
+
+        archive = json.loads(history._archive_path(history_file).read_text())
+        assert [e["logged_at"] for e in archive] == ["0", "1"]
+
+    def test_archived_entries_stay_out_of_active_file_across_calls(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(history, "MAX_ACTIVE_ENTRIES", 2)
+        history_file = tmp_path / "history.json"
+        wger_client._last_plan = [{"muscle_group": "chest", "exercises": []}]
+
+        history.log_last_workout(history_file=history_file)
+        history.log_last_workout(history_file=history_file)
+        history.log_last_workout(history_file=history_file)
+
+        assert len(json.loads(history_file.read_text())) == 2
+        assert len(json.loads(history._archive_path(history_file).read_text())) == 1
+
+    def test_keeps_everything_active_when_archive_write_fails(self, tmp_path, monkeypatch):
+        monkeypatch.setattr(history, "MAX_ACTIVE_ENTRIES", 2)
+        history_file = tmp_path / "history.json"
+        history_file.write_text(json.dumps([{"logged_at": str(i)} for i in range(3)]))
+        wger_client._last_plan = [{"muscle_group": "chest", "exercises": []}]
+
+        def broken_write_text(self, *args, **kwargs):
+            raise OSError("disk full")
+
+        monkeypatch.setattr(type(history_file), "write_text", broken_write_text)
+
+        history.log_last_workout(history_file=history_file)
+
+        assert not history._archive_path(history_file).exists()

@@ -25,3 +25,9 @@ def profile_path(user):
 
 def history_path(user):
     return DATA_DIR / sanitize_user(user) / "workout_history.json"
+
+
+def list_users():
+    if not DATA_DIR.exists():
+        return []
+    return sorted(entry.name for entry in DATA_DIR.iterdir() if entry.is_dir())
