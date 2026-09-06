@@ -3,6 +3,7 @@ from pathlib import Path
 
 import uvicorn
 from fastapi import FastAPI
+from fastapi import Request
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
@@ -18,6 +19,14 @@ app = FastAPI()
 # Sessions are lost on restart and this doesn't scale past one server instance —
 # an accepted tradeoff for shipping quickly, not a bug.
 SESSIONS = {}
+
+
+@app.middleware("http")
+async def cache_static_assets(request: Request, call_next):
+    response = await call_next(request)
+    if request.url.path.endswith((".css", ".js")):
+        response.headers["Cache-Control"] = "public, max-age=3600"
+    return response
 
 
 class ChatRequest(BaseModel):

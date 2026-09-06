@@ -6,6 +6,7 @@
   const resetBtn = document.getElementById("reset");
   const form = document.getElementById("composer");
   const starterPrompts = document.querySelectorAll("[data-prompt]");
+  let scrollFrame = null;
 
   function uuid() {
     if (crypto.randomUUID) return crypto.randomUUID();
@@ -32,7 +33,12 @@
     el.className = "msg " + role;
     el.textContent = text;
     messagesEl.appendChild(el);
-    messagesEl.scrollTop = messagesEl.scrollHeight;
+    if (scrollFrame === null) {
+      scrollFrame = requestAnimationFrame(() => {
+        messagesEl.scrollTop = messagesEl.scrollHeight;
+        scrollFrame = null;
+      });
+    }
     return el;
   }
 
@@ -47,6 +53,12 @@
 
     addMessage("user", message);
     const pending = addMessage("assistant pending", "…thinking");
+    const waitingMessages = ["…checking the exercise library", "…shaping your session", "…finding a strong next step"];
+    let waitingIndex = 0;
+    const waitingTimer = window.setInterval(() => {
+      waitingIndex = (waitingIndex + 1) % waitingMessages.length;
+      pending.textContent = waitingMessages[waitingIndex];
+    }, 1400);
     setBusy(true);
 
     try {
@@ -57,6 +69,7 @@
       });
       const data = await response.json();
 
+      window.clearInterval(waitingTimer);
       pending.remove();
       if (data.error) {
         addMessage("error", data.error);
@@ -64,6 +77,7 @@
         addMessage("assistant", data.reply || "(no reply)");
       }
     } catch (error) {
+      window.clearInterval(waitingTimer);
       pending.remove();
       addMessage("error", "Request failed: " + error.message);
     } finally {
