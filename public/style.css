@@ -16,6 +16,7 @@
   --error: oklch(51% .16 28);
 }
 * { box-sizing: border-box; }
+html { min-width: 320px; background: var(--canvas); }
 body { margin: 0; background: var(--canvas); color: var(--ink); font-family: Futura, "Century Gothic", sans-serif; min-height: 100dvh; overflow: hidden; }
 .app-shell { display: grid; grid-template-columns: minmax(220px, 26vw) 1fr; width: 100%; min-height: 100dvh; }
 .orientation { background: var(--ink); color: var(--paper); display: flex; flex-direction: column; justify-content: space-between; padding: clamp(24px, 5vw, 72px) clamp(20px, 4vw, 56px) 28px; }
@@ -39,13 +40,15 @@ h2 { margin: 0; font-size: clamp(26px, 4vw, 54px); line-height: .98; max-width: 
 .mobile-brand { display: none; margin-right: auto; font-weight: bold; }
 .identity-field { display: flex; align-items: center; gap: 10px; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .08em; }
 input, button { font-family: inherit; }
+button:focus-visible, input:focus-visible { outline: 2px solid var(--accent); outline-offset: 4px; }
+button:disabled { cursor: wait; }
 .msg, #composer input::placeholder, .send-button { font-family: inherit; }
 .identity-field input, #composer input { min-height: 44px; border: 0; border-bottom: 1px solid var(--line); outline: 0; background: transparent; color: var(--ink); }
 .identity-field input { width: 120px; font-size: 14px; text-transform: none; letter-spacing: 0; }
 .identity-field input:focus, #composer input:focus { border-color: var(--accent); }
 .quiet-button, .starter-prompts button { border: 0; background: transparent; color: var(--muted); cursor: pointer; }
 .quiet-button { min-height: 44px; padding: 8px 0; font-size: 12px; }
-.quiet-button:hover, .quiet-button:focus-visible { color: var(--accent-dark); }
+.quiet-button:hover { color: var(--accent-dark); }
 .conversation { flex: 1 1 auto; overflow-y: auto; padding: clamp(28px, 5vw, 76px) clamp(18px, 7vw, 112px) 24px; display: flex; flex-direction: column; gap: 28px; }
 .conversation-heading { display: flex; align-items: end; justify-content: space-between; gap: 20px; }
 .live-status { flex: 0 0 auto; display: flex; align-items: center; gap: 7px; color: var(--muted); font-size: 12px; }
@@ -53,7 +56,7 @@ input, button { font-family: inherit; }
 .starter-prompts button { min-height: 40px; padding: 8px 13px; border: 1px solid var(--line); border-radius: 999px; color: var(--ink); font-size: 12px; }
 .starter-prompts button:nth-child(2) { border-color: color-mix(in oklch, var(--sun) 55%, var(--line)); background: color-mix(in oklch, var(--sun-soft) 38%, transparent); }
 .starter-prompts button { transition: transform .2s ease-out, border-color .2s ease-out, background-color .2s ease-out; }
-.starter-prompts button:hover, .starter-prompts button:focus-visible { transform: translateY(-2px); border-color: var(--accent); background: var(--soft-accent); }
+.starter-prompts button:hover { transform: translateY(-2px); border-color: var(--accent); background: var(--soft-accent); }
 #messages { display: flex; flex-direction: column; gap: 12px; margin-top: auto; }
 .msg { max-width: min(680px, 82%); padding: 14px 17px; border-radius: 2px 16px 16px 16px; line-height: 1.4; white-space: pre-wrap; font-size: 14px; }
 .msg.user { align-self: flex-end; background: var(--ink); color: var(--paper); border-radius: 16px 2px 16px 16px; }
@@ -66,9 +69,9 @@ form#composer { display: flex; gap: 14px; padding: 14px clamp(18px, 7vw, 112px) 
 #composer input[type="text"] { width: 100%; padding: 10px 0; font-size: 16px; }
 .send-button { align-self: end; display: flex; align-items: center; gap: 14px; min-height: 44px; padding: 10px 15px; border: 0; border-radius: 2px; background: var(--accent); color: var(--accent-ink); font-size: 13px; cursor: pointer; }
 .send-button { transition: transform .15s ease-out, background-color .2s ease-out; }
-.send-button:hover, .send-button:focus-visible { transform: translateY(-2px); background: var(--accent-dark); }
+.send-button:hover { transform: translateY(-2px); background: var(--accent-dark); }
 .send-button:active { transform: translateY(1px); }
-#composer button:disabled { opacity: .5; cursor: default; }
+#composer button:disabled, #reset:disabled { opacity: .5; cursor: wait; }
 .composer-hint { margin: 8px clamp(18px, 7vw, 112px) 18px; color: var(--muted); font-size: 10px; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 @media (max-width: 700px) {

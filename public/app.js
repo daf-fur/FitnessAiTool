@@ -4,6 +4,7 @@
   const inputEl = document.getElementById("input");
   const sendBtn = document.getElementById("send");
   const resetBtn = document.getElementById("reset");
+  const statusEl = document.getElementById("connection-status");
   const form = document.getElementById("composer");
   const starterPrompts = document.querySelectorAll("[data-prompt]");
   let scrollFrame = null;
@@ -45,6 +46,7 @@
   function setBusy(busy) {
     inputEl.disabled = busy;
     sendBtn.disabled = busy;
+    sendBtn.setAttribute("aria-busy", busy ? "true" : "false");
   }
 
   async function sendMessage(message) {
@@ -68,6 +70,7 @@
         body: JSON.stringify({ session_id: sessionId, user, message }),
       });
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
 
       window.clearInterval(waitingTimer);
       pending.remove();
@@ -95,13 +98,24 @@
   });
 
   resetBtn.addEventListener("click", async () => {
-    await fetch("/api/reset", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ session_id: sessionId }),
-    });
-    messagesEl.innerHTML = "";
-    addMessage("assistant", "Conversation reset. What would you like to work on?");
+    resetBtn.disabled = true;
+    statusEl.lastChild.textContent = " Resetting";
+    try {
+      const response = await fetch("/api/reset", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ session_id: sessionId }),
+      });
+      if (!response.ok) throw new Error(`Reset failed (${response.status})`);
+      messagesEl.replaceChildren();
+      addMessage("assistant", "Conversation reset. What would you like to work on?");
+      statusEl.lastChild.textContent = " Online";
+    } catch (error) {
+      addMessage("error", "Could not reset the conversation: " + error.message);
+      statusEl.lastChild.textContent = " Reset unavailable";
+    } finally {
+      resetBtn.disabled = false;
+    }
   });
 
   starterPrompts.forEach((promptButton) => {

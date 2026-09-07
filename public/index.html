@@ -27,13 +27,13 @@
     <header class="topbar">
       <div class="mobile-brand"><span class="brand-mark" aria-hidden="true">+</span><span>Fitness Agent</span></div>
       <label class="identity-field"><span>Your profile</span><input id="user" type="text" placeholder="your name" autocomplete="off"></label>
-      <button id="reset" class="quiet-button" type="button">Reset session</button>
+      <button id="reset" class="quiet-button" type="button" aria-label="Reset conversation session">Reset session</button>
     </header>
 
     <section class="conversation" aria-label="Conversation">
       <div class="conversation-heading">
         <div><p class="eyebrow">Open coaching session</p><h2>What are we training today?</h2></div>
-        <span class="live-status"><span class="signal-dot" aria-hidden="true"></span> Online</span>
+        <span id="connection-status" class="live-status" role="status" aria-live="polite"><span class="signal-dot" aria-hidden="true"></span> Online</span>
       </div>
       <div class="starter-prompts" aria-label="Starter prompts">
         <button type="button" data-prompt="Build me a strength-focused push day">Build a push day</button>
@@ -43,9 +43,9 @@
       <div id="messages" aria-live="polite" aria-label="Chat messages"></div>
     </section>
 
-    <form id="composer">
+    <form id="composer" novalidate>
       <label class="composer-field"><span class="sr-only">Message Fitness Agent</span><input id="input" type="text" placeholder="Ask for a plan, a swap, or a progress check…" autocomplete="off"></label>
-      <button id="send" class="send-button" type="submit"><span>Send</span><span aria-hidden="true">↗</span></button>
+      <button id="send" class="send-button" type="submit" aria-label="Send message"><span>Send</span><span aria-hidden="true">↗</span></button>
     </form>
     <p class="composer-hint">Your profile and workout history stay scoped to your name.</p>
   </main>
