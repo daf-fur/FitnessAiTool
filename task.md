@@ -7,11 +7,11 @@ This is a portfolio piece for people who want a capable, straightforward fitness
 Simple, clean, practical, elegant, and elevated. The product should evoke confidence and focus: grounded enough to feel trustworthy, polished enough to feel intentional, and direct enough to keep the user moving.
 
 ### Aesthetic Direction
-Refine the existing warm editorial light theme rather than changing its foundation. Keep the contrast between warm paper-like surfaces, a deep charcoal structure, and a restrained orange accent, while making the composition feel more distinctive and portfolio-ready. Lean into the current pairing of expressive serif display typography with refined sans-serif interface text, asymmetrical editorial spacing, and quiet utilitarian controls. The product should feel like a considered personal training desk, not a generic neon gym dashboard, gamified tracker, or dense enterprise admin panel. No dark mode is required for the current direction.
+Use a bold sports-editorial "Training Office" direction rather than an AI workspace metaphor. The interface is a full-width personal training publication: a horizontal masthead, oversized action-led hero, numbered prompt index, print-like rules, a labeled live transcript, and a fixed note-writing dock. Keep the warm paper, deep green-black ink, and restrained coral-orange foundation, with expressive serif display typography and compact sans-serif labels. The memorable element is the feeling of posting the next training note into an ongoing issue. Avoid sidebars, app-dashboard shells, rounded chatbot bubbles, generic assistant hero copy, neon gym dashboards, gamified trackers, and dense enterprise admin panels. No dark mode is required.
 
 ### Design Principles
 - Make planning and progress equally visible without turning the interface into a dashboard of competing metrics.
 - Use grounded, evidence-led language and hierarchy so the source-backed coaching feels trustworthy.
-- Favor clear editorial composition, intentional whitespace, and a small number of meaningful accents over decorative cards or effects.
+- Favor clear editorial composition, intentional whitespace, numbered cues, print-like rules, and a small number of meaningful accents over decorative cards or effects.
 - Make every interaction feel direct and capable, with obvious states for sending, waiting, errors, reset, and saved identity.
 - Meet WCAG AA expectations through keyboard access, visible focus states, readable contrast, responsive layouts, and respect for reduced-motion preferences.

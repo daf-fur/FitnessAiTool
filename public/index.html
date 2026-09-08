@@ -3,54 +3,52 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fitness Agent</title>
+<title>Fitness Agent / Training Office</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
-<div class="app-shell">
-  <aside class="orientation" aria-label="Fitness Agent overview">
-    <div class="brand-lockup">
-      <span class="brand-mark" aria-hidden="true">+</span>
-      <div>
-        <p class="eyebrow">Personal training desk</p>
-        <h1>Fitness Agent</h1>
-      </div>
-    </div>
-    <div class="rail-note">
-      <span class="signal-dot" aria-hidden="true"></span>
-      <div><strong>Grounded guidance</strong><span>Plans built from real exercise data.</span></div>
-    </div>
-    <div class="rail-footer"><span>SESSION</span><span class="session-label">READY TO TRAIN</span></div>
-  </aside>
+<header class="masthead">
+  <a class="wordmark" href="/" aria-label="Fitness Agent home"><span>F.A.</span><strong>Training Office</strong></a>
+  <p class="issue-label">Personal training / issue 001</p>
+  <div class="masthead-actions">
+    <label class="identity-field"><span>Profile</span><input id="user" type="text" placeholder="your name" autocomplete="off"></label>
+    <button id="reset" class="quiet-button" type="button" aria-label="Reset conversation session">Reset</button>
+  </div>
+</header>
 
-  <main class="workspace">
-    <header class="topbar">
-      <div class="mobile-brand"><span class="brand-mark" aria-hidden="true">+</span><span>Fitness Agent</span></div>
-      <label class="identity-field"><span>Your profile</span><input id="user" type="text" placeholder="your name" autocomplete="off"></label>
-      <button id="reset" class="quiet-button" type="button" aria-label="Reset conversation session">Reset session</button>
-    </header>
+<main class="page">
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="hero-kicker"><span>01 / Open session</span><span id="connection-status" role="status" aria-live="polite"><i class="signal-dot" aria-hidden="true"></i> Library ready</span></div>
+    <div class="hero-copy">
+      <h1 id="hero-title">Make the next<br><em>rep count.</em></h1>
+      <p class="hero-note">A practical training desk for building sessions, recording the work, and noticing what changes.</p>
+    </div>
+    <div class="hero-stamp" aria-hidden="true"><span>FA</span><small>EST.<br>2024</small></div>
+  </section>
 
-    <section class="conversation" aria-label="Conversation">
-      <div class="conversation-heading">
-        <div><p class="eyebrow">Open coaching session</p><h2>What are we training today?</h2></div>
-        <span id="connection-status" class="live-status" role="status" aria-live="polite"><span class="signal-dot" aria-hidden="true"></span> Online</span>
+  <section class="workbench" aria-label="Training workspace">
+    <aside class="prompt-index" aria-label="Start here">
+      <p class="section-label">Start here</p>
+      <div class="prompt-list">
+        <button type="button" data-prompt="Build me a strength-focused push day"><b>01</b><span><strong>Build a session</strong><small>Push, pull, legs, or whatever is next.</small></span><i aria-hidden="true">↗</i></button>
+        <button type="button" data-prompt="Give me bodyweight exercises for my legs"><b>02</b><span><strong>Work with what you have</strong><small>Bodyweight, dumbbells, a small room.</small></span><i aria-hidden="true">↗</i></button>
+        <button type="button" data-prompt="What have I done recently?"><b>03</b><span><strong>Read your history</strong><small>Find the pattern in the work.</small></span><i aria-hidden="true">↗</i></button>
       </div>
-      <div class="starter-prompts" aria-label="Starter prompts">
-        <button type="button" data-prompt="Build me a strength-focused push day">Build a push day</button>
-        <button type="button" data-prompt="Give me bodyweight exercises for my legs">Bodyweight legs</button>
-        <button type="button" data-prompt="What have I done recently?">Review my history</button>
-      </div>
+      <p class="source-note"><i class="signal-dot" aria-hidden="true"></i> Guidance grounded in the wger exercise library.</p>
+    </aside>
+
+    <section class="transcript" aria-label="Training transcript">
+      <header class="transcript-header"><span class="section-label">Live transcript</span><span>Session 01 <b>/</b> 00:00</span></header>
       <div id="messages" aria-live="polite" aria-label="Chat messages"></div>
     </section>
+  </section>
+</main>
 
-    <form id="composer" novalidate>
-      <label class="composer-field"><span class="sr-only">Message Fitness Agent</span><input id="input" type="text" placeholder="Ask for a plan, a swap, or a progress check…" autocomplete="off"></label>
-      <button id="send" class="send-button" type="submit" aria-label="Send message"><span>Send</span><span aria-hidden="true">↗</span></button>
-    </form>
-    <p class="composer-hint">Your profile and workout history stay scoped to your name.</p>
-  </main>
-</div>
-
+<form id="composer" novalidate>
+  <label class="composer-field"><span class="sr-only">Message Fitness Agent</span><input id="input" type="text" placeholder="Write the next note: ask for a plan, a swap, or a progress check…" autocomplete="off"></label>
+  <button id="send" class="send-button" type="submit" aria-label="Send message"><span>Post note</span><span aria-hidden="true">↗</span></button>
+</form>
+<p class="composer-hint">Your profile and workout history stay scoped to your name.</p>
 <script src="app.js"></script>
 </body>
 </html>
