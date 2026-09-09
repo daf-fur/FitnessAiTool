@@ -7,32 +7,11 @@
   const statusEl = document.getElementById("connection-status");
   const form = document.getElementById("composer");
   const starterPrompts = document.querySelectorAll("[data-prompt]");
-  const designButtons = document.querySelectorAll("[data-design-option]");
-  const supportedDesigns = ["training-office", "field-notes", "brutalist-board"];
   let scrollFrame = null;
 
-  function updateTheme(designName) {
-    const nextDesign = supportedDesigns.includes(designName) ? designName : "training-office";
-    document.body.dataset.design = nextDesign;
-    localStorage.setItem("fa_design", nextDesign);
-    const params = new URLSearchParams(window.location.search);
-    params.set("design", nextDesign);
-    const nextUrl = `${window.location.pathname}?${params.toString()}`;
-    history.replaceState({}, "", nextUrl);
-
-    designButtons.forEach((button) => {
-      const active = button.dataset.designOption === nextDesign;
-      button.classList.toggle("is-active", active);
-      button.setAttribute("aria-pressed", active ? "true" : "false");
-    });
+  function setStatus(label) {
+    statusEl.innerHTML = '<i class="signal-dot" aria-hidden="true"></i> ' + label;
   }
-
-  const initialDesign = new URLSearchParams(window.location.search).get("design") || localStorage.getItem("fa_design") || "training-office";
-  updateTheme(initialDesign);
-
-  designButtons.forEach((button) => {
-    button.addEventListener("click", () => updateTheme(button.dataset.designOption));
-  });
 
   function uuid() {
     if (crypto.randomUUID) return crypto.randomUUID();
@@ -59,12 +38,14 @@
     el.className = "msg " + role;
     el.textContent = text;
     messagesEl.appendChild(el);
+
     if (scrollFrame === null) {
       scrollFrame = requestAnimationFrame(() => {
         messagesEl.scrollTop = messagesEl.scrollHeight;
         scrollFrame = null;
       });
     }
+
     return el;
   }
 
@@ -79,35 +60,43 @@
     localStorage.setItem("fa_user", user);
 
     addMessage("user", message);
-    const pending = addMessage("assistant pending", "…thinking");
-    const waitingMessages = ["…checking the exercise library", "…shaping your session", "…finding a strong next step"];
-    let waitingIndex = 0;
-    const waitingTimer = window.setInterval(() => {
-      waitingIndex = (waitingIndex + 1) % waitingMessages.length;
-      pending.textContent = waitingMessages[waitingIndex];
-    }, 1400);
+
+    const pending = addMessage("assistant pending", "Thinking…");
+    const thinkingMessages = ["Checking the exercise library…", "Shaping your session…", "Finding the best next step…"];
+    let index = 0;
+    const timer = window.setInterval(() => {
+      index = (index + 1) % thinkingMessages.length;
+      pending.textContent = thinkingMessages[index];
+    }, 1200);
+
     setBusy(true);
+    setStatus("Working");
 
     try {
       const response = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId, user, message }),
+        body: JSON.stringify({ session_id: sessionId, user, message })
       });
+
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
 
-      window.clearInterval(waitingTimer);
+      window.clearInterval(timer);
       pending.remove();
+
       if (data.error) {
         addMessage("error", data.error);
+        setStatus("Error");
       } else {
         addMessage("assistant", data.reply || "(no reply)");
+        setStatus("Ready");
       }
     } catch (error) {
-      window.clearInterval(waitingTimer);
+      window.clearInterval(timer);
       pending.remove();
       addMessage("error", "Request failed: " + error.message);
+      setStatus("Error");
     } finally {
       setBusy(false);
       inputEl.focus();
@@ -118,26 +107,30 @@
     event.preventDefault();
     const message = inputEl.value.trim();
     if (!message) return;
+
     inputEl.value = "";
     sendMessage(message);
   });
 
   resetBtn.addEventListener("click", async () => {
     resetBtn.disabled = true;
-    statusEl.lastChild.textContent = " Resetting";
+    setStatus("Resetting");
+
     try {
       const response = await fetch("/api/reset", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ session_id: sessionId }),
+        body: JSON.stringify({ session_id: sessionId })
       });
+
       if (!response.ok) throw new Error(`Reset failed (${response.status})`);
+
       messagesEl.replaceChildren();
       addMessage("assistant", "Conversation reset. What would you like to work on?");
-      statusEl.lastChild.textContent = " Online";
+      setStatus("Ready");
     } catch (error) {
       addMessage("error", "Could not reset the conversation: " + error.message);
-      statusEl.lastChild.textContent = " Reset unavailable";
+      setStatus("Error");
     } finally {
       resetBtn.disabled = false;
     }
@@ -150,5 +143,7 @@
     });
   });
 
-  addMessage("assistant", "Hi! Tell me your goals, and I'll build workouts grounded in real exercise data.");
+  setStatus("Ready");
+  addMessage("assistant", "Hi! I can help plan a session, suggest alternatives, or review your recent training.");
 })();
+

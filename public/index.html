@@ -1,59 +1,93 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fitness Agent / Training Office</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fitness Agent</title>
+  <meta name="description" content="Minimal fitness planning and coaching assistant.">
+  <link rel="stylesheet" href="style.css">
 </head>
-<body data-design="training-office">
-<header class="masthead">
-  <a class="wordmark" href="/" aria-label="Fitness Agent home"><span>F.A.</span><strong>Training Office</strong></a>
-  <p class="issue-label">Personal training / issue 001</p>
-  <div class="masthead-actions">
-    <nav class="design-switcher" aria-label="Design themes">
-      <button type="button" class="theme-button is-active" data-design-option="training-office">Office</button>
-      <button type="button" class="theme-button" data-design-option="field-notes">Field Notes</button>
-      <button type="button" class="theme-button" data-design-option="brutalist-board">Gym Board</button>
-    </nav>
-    <label class="identity-field"><span>Profile</span><input id="user" type="text" placeholder="your name" autocomplete="off"></label>
-    <button id="reset" class="quiet-button" type="button" aria-label="Reset conversation session">Reset</button>
-  </div>
-</header>
-
-<main class="page">
-  <section class="hero" aria-labelledby="hero-title">
-    <div class="hero-kicker"><span>01 / Open session</span><span id="connection-status" role="status" aria-live="polite"><i class="signal-dot" aria-hidden="true"></i> Library ready</span></div>
-    <div class="hero-copy">
-      <h1 id="hero-title">Make the next<br><em>rep count.</em></h1>
-      <p class="hero-note">A practical training desk for building sessions, recording the work, and noticing what changes.</p>
-    </div>
-    <div class="hero-stamp" aria-hidden="true"><span>FA</span><small>EST.<br>2024</small></div>
-  </section>
-
-  <section class="workbench" aria-label="Training workspace">
-    <aside class="prompt-index" aria-label="Start here">
-      <p class="section-label">Start here</p>
-      <div class="prompt-list">
-        <button type="button" data-prompt="Build me a strength-focused push day"><b>01</b><span><strong>Build a session</strong><small>Push, pull, legs, or whatever is next.</small></span><i aria-hidden="true">↗</i></button>
-        <button type="button" data-prompt="Give me bodyweight exercises for my legs"><b>02</b><span><strong>Work with what you have</strong><small>Bodyweight, dumbbells, a small room.</small></span><i aria-hidden="true">↗</i></button>
-        <button type="button" data-prompt="What have I done recently?"><b>03</b><span><strong>Read your history</strong><small>Find the pattern in the work.</small></span><i aria-hidden="true">↗</i></button>
+<body>
+  <div class="page-shell">
+    <header class="topbar">
+      <div class="brand" aria-label="Fitness Agent home">
+        <span class="brand-mark">F</span>
+        <div class="brand-copy">
+          <span class="brand-name">Fitness Agent</span>
+          <span class="brand-tag">Training desk</span>
+        </div>
       </div>
-      <p class="source-note"><i class="signal-dot" aria-hidden="true"></i> Guidance grounded in the wger exercise library.</p>
-    </aside>
 
-    <section class="transcript" aria-label="Training transcript">
-      <header class="transcript-header"><span class="section-label">Live transcript</span><span>Session 01 <b>/</b> 00:00</span></header>
-      <div id="messages" aria-live="polite" aria-label="Chat messages"></div>
-    </section>
-  </section>
-</main>
+      <div class="topbar-actions">
+        <label class="profile-field">
+          <span>Profile</span>
+          <input id="user" type="text" placeholder="your name" autocomplete="off">
+        </label>
+        <button id="reset" type="button" class="reset-button">Reset</button>
+      </div>
+    </header>
 
-<form id="composer" novalidate>
-  <label class="composer-field"><span class="sr-only">Message Fitness Agent</span><input id="input" type="text" placeholder="Write the next note: ask for a plan, a swap, or a progress check…" autocomplete="off"></label>
-  <button id="send" class="send-button" type="submit" aria-label="Send message"><span>Post note</span><span aria-hidden="true">↗</span></button>
-</form>
-<p class="composer-hint">Your profile and workout history stay scoped to your name.</p>
-<script src="app.js"></script>
+    <main class="workspace">
+      <aside class="brief-panel" aria-label="Current training brief">
+        <div class="meta-row">
+          <span>Session 01</span>
+          <span>Monday</span>
+        </div>
+
+        <h2>Current brief</h2>
+
+        <ul class="brief-list">
+          <li>
+            <span>Focus</span>
+            <strong>Upper body</strong>
+          </li>
+          <li>
+            <span>Recovery</span>
+            <strong>3 × bench + pull-ups</strong>
+          </li>
+          <li>
+            <span>Notes</span>
+            <strong>Keep shoulders healthy</strong>
+          </li>
+        </ul>
+      </aside>
+
+      <div class="content-column">
+        <section class="hero" aria-labelledby="hero-title">
+          <div class="eyebrow">Fitness companion</div>
+          <h1 id="hero-title">Plan smarter.<br><span>Train with clarity.</span></h1>
+          <p>Build sessions, swap exercises, and review your recent work without the noise.</p>
+
+          <div class="quick-prompts" aria-label="Quick prompts">
+            <button type="button" class="prompt-chip" data-prompt="Build me a strength-focused push day">Push day</button>
+            <button type="button" class="prompt-chip" data-prompt="Give me bodyweight exercises for my legs">Bodyweight</button>
+            <button type="button" class="prompt-chip" data-prompt="What have I done recently?">Recent logs</button>
+          </div>
+        </section>
+
+        <section class="panel" aria-label="Conversation panel">
+          <div class="panel-header">
+            <span class="panel-label">Conversation</span>
+            <span id="connection-status" role="status" aria-live="polite"><i class="signal-dot" aria-hidden="true"></i> Ready</span>
+          </div>
+
+          <div id="messages" class="messages" aria-live="polite" aria-label="Chat messages"></div>
+        </section>
+      </div>
+    </main>
+
+    <form id="composer" novalidate>
+      <label class="composer-field" for="input">
+        <span class="sr-only">Message Fitness Agent</span>
+        <input id="input" type="text" placeholder="Ask for a plan, exercise swap, or progress review…" autocomplete="off">
+      </label>
+      <button id="send" type="submit" class="send-button">Send</button>
+    </form>
+
+    <p class="helper-text">Your profile and workout history stay scoped to your name.</p>
+  </div>
+
+  <script src="app.js"></script>
 </body>
 </html>
+
