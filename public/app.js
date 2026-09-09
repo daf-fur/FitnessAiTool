@@ -7,7 +7,32 @@
   const statusEl = document.getElementById("connection-status");
   const form = document.getElementById("composer");
   const starterPrompts = document.querySelectorAll("[data-prompt]");
+  const designButtons = document.querySelectorAll("[data-design-option]");
+  const supportedDesigns = ["training-office", "field-notes", "brutalist-board"];
   let scrollFrame = null;
+
+  function updateTheme(designName) {
+    const nextDesign = supportedDesigns.includes(designName) ? designName : "training-office";
+    document.body.dataset.design = nextDesign;
+    localStorage.setItem("fa_design", nextDesign);
+    const params = new URLSearchParams(window.location.search);
+    params.set("design", nextDesign);
+    const nextUrl = `${window.location.pathname}?${params.toString()}`;
+    history.replaceState({}, "", nextUrl);
+
+    designButtons.forEach((button) => {
+      const active = button.dataset.designOption === nextDesign;
+      button.classList.toggle("is-active", active);
+      button.setAttribute("aria-pressed", active ? "true" : "false");
+    });
+  }
+
+  const initialDesign = new URLSearchParams(window.location.search).get("design") || localStorage.getItem("fa_design") || "training-office";
+  updateTheme(initialDesign);
+
+  designButtons.forEach((button) => {
+    button.addEventListener("click", () => updateTheme(button.dataset.designOption));
+  });
 
   function uuid() {
     if (crypto.randomUUID) return crypto.randomUUID();

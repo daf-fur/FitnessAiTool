@@ -6,11 +6,16 @@
 <title>Fitness Agent / Training Office</title>
 <link rel="stylesheet" href="style.css">
 </head>
-<body>
+<body data-design="training-office">
 <header class="masthead">
   <a class="wordmark" href="/" aria-label="Fitness Agent home"><span>F.A.</span><strong>Training Office</strong></a>
   <p class="issue-label">Personal training / issue 001</p>
   <div class="masthead-actions">
+    <nav class="design-switcher" aria-label="Design themes">
+      <button type="button" class="theme-button is-active" data-design-option="training-office">Office</button>
+      <button type="button" class="theme-button" data-design-option="field-notes">Field Notes</button>
+      <button type="button" class="theme-button" data-design-option="brutalist-board">Gym Board</button>
+    </nav>
     <label class="identity-field"><span>Profile</span><input id="user" type="text" placeholder="your name" autocomplete="off"></label>
     <button id="reset" class="quiet-button" type="button" aria-label="Reset conversation session">Reset</button>
   </div>
