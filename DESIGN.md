@@ -16,23 +16,26 @@ colors:
   signal-green: "#738c67"
 typography:
   display:
-    fontFamily: '"Iowan Old Style", "Georgia", "Times New Roman", serif'
-    fontSize: "clamp(3.2rem, 6vw, 6rem)"
-    fontWeight: 500
-    lineHeight: 0.92
-    letterSpacing: "-0.07em"
+    fontFamily: '"Barlow Condensed", "Arial Narrow", sans-serif'
+    fontSize: "clamp(4rem, 7.5vw, 7.5rem)"
+    fontWeight: 700
+    lineHeight: 0.9
+    letterSpacing: "0.01em"
+    textTransform: "uppercase"
   headline:
-    fontFamily: '"Iowan Old Style", "Georgia", "Times New Roman", serif'
-    fontSize: "clamp(2rem, 3vw, 2.7rem)"
-    fontWeight: 500
-    letterSpacing: "-0.05em"
+    fontFamily: '"Barlow Condensed", "Arial Narrow", sans-serif'
+    fontSize: "clamp(2.2rem, 3.2vw, 3rem)"
+    fontWeight: 600
+    lineHeight: 1.05
+    letterSpacing: "0.01em"
+    textTransform: "uppercase"
   body:
     fontFamily: '"Helvetica Neue", "Segoe UI", sans-serif'
     fontSize: "1rem"
     lineHeight: 1.7
   label:
     fontFamily: '"Helvetica Neue", "Segoe UI", sans-serif'
-    fontSize: "0.66rem"
+    fontSize: "0.75rem"
     fontWeight: 600
     letterSpacing: "0.12em"
 rounded:
@@ -77,17 +80,17 @@ components:
 
 ## Overview
 
-**Creative North Star: "The Field Notes"**
+**Creative North Star: "Chalk & Carbon"**
 
-The Fitness Agent is built on the aesthetic of a well-kept training notebook: warm paper, reliable ink, sparing use of a muted green accent that feels more field than gym. The visual language draws from analog tools — the parchment warmth of the background, the tight-tracked uppercase labels of a form sheet, the serif typography that appears only for editorial moments — while staying fully functional as a modern web application.
+The Fitness Agent is built on the aesthetic of a dark, focused training environment: deep carbon backgrounds, warm earthy ink, and a single muted green accent that reads as field, not gym. The visual language draws from analog athletic tools — the scoreboard compression of condensed uppercase headings, the tight-tracked labels of a form sheet, the restraint of a single accent colour — while staying fully functional as a modern web application.
 
-The key tension the design resolves: a fitness tool should feel capable without feeling clinical. This system achieves that through material warmth (the earthy palette), editorial authority (the serif display type), and restraint in decoration (Field Sage appears on fewer than three elements per screen). The result is a surface that a user would feel comfortable spending focused time inside — not a dashboard to check, but a desk to sit at.
+The key tension the design resolves: a fitness tool should feel capable without feeling clinical. This system achieves that through tonal depth (the dark carbon palette), athletic authority (Barlow Condensed at heading scale), and restraint in decoration (Field Sage appears on fewer than three elements per screen). The result is a surface that a user would feel comfortable spending focused time inside — not a dashboard to check, but a training desk to sit at.
 
 Density is medium. Panels are generous but bounded. The two-column workspace gives the brief sidebar and conversation panel distinct territories without crowding either. Every component breathes at `18px` internal padding.
 
 **Key Characteristics:**
-- Warm earthy palette rooted in organic neutrals, not corporate blue
-- Serif used only at editorial scale — hero heading and brief panel title
+- Dark carbon palette with warm earthy undertones, not cold dark mode
+- Barlow Condensed used only at heading scale — hero h1 and brief panel h2
 - Field Sage accent is scarce: brand mark, hero span, send button only
 - Structural shadows signal hierarchy; they are warm, not cool
 - Pill radius for interactive controls; panel radius for containers; never mixed
@@ -122,19 +125,19 @@ An earthy, analog palette built on warm neutrals with a single muted green accen
 
 ## Typography
 
-**Display Font:** Iowan Old Style (with Georgia, Times New Roman fallback)
+**Display Font:** Barlow Condensed (with Arial Narrow fallback), loaded from Google Fonts at weights 600 and 700
 **Body Font:** Helvetica Neue (with Segoe UI fallback)
 
-**Character:** Editorial contrast. Serif appears only at scale — the hero heading and the brief panel title — where it reads as an authorial moment. All operational text (labels, messages, input, buttons) uses the clean sans. The pairing signals when content is being *read* versus *acted on*.
+**Character:** Athletic compression. Barlow Condensed appears only at heading scale — the hero h1 and the brief panel h2 — where its narrow stance and uppercase setting read as scoreboard authority. All operational text (labels, messages, input, buttons) uses the clean sans. The pairing separates editorial moments from task-mode copy; the condensed display face is the performance signal, not decoration.
 
 ### Hierarchy
-- **Display** (Iowan Old Style, weight 500, `clamp(3.2rem, 6vw, 6rem)`, line-height 0.92, letter-spacing -0.07em): Hero heading only. Tightly tracked and compressed, with the accent span in Deep Forest.
-- **Headline** (Iowan Old Style, weight 500, `clamp(2rem, 3vw, 2.7rem)`, letter-spacing -0.05em): Brief panel `h2` only. Scaled down from Display but maintaining the serif authority.
+- **Display** (Barlow Condensed, weight 700, `clamp(4rem, 7.5vw, 7.5rem)`, line-height 0.9, letter-spacing 0.01em, uppercase): Hero heading only. The condensed form allows large optical size without sprawl; uppercase setting reinforces the scoreboard register.
+- **Headline** (Barlow Condensed, weight 600, `clamp(2.2rem, 3.2vw, 3rem)`, line-height 1.05, letter-spacing 0.01em, uppercase): Brief panel `h2` only. Scaled down from Display but holding the same condensed authority.
 - **Body** (Helvetica Neue, 1rem, line-height 1.7): Message content, input text, lead paragraph, helper copy. Max line length on the hero paragraph is `620px`.
-- **Label** (Helvetica Neue, 0.64–0.78rem, letter-spacing 0.12–0.16em, uppercase): All metadata, section labels, brand name, brand tag, button text, panel header, profile field. The uppercase tracked register is the system's secondary voice.
+- **Label** (Helvetica Neue, 0.75rem, letter-spacing 0.12–0.16em, uppercase): All metadata, section labels, brand name, brand tag, button text, panel header, profile field. The uppercase tracked register is the system's secondary voice.
 
 ### Named Rules
-**The Field Notes Rule.** Serif is an editorial instrument, not a hierarchy decoration. It appears only on the two largest headings (Display and Headline) — the places where a user pauses to orient. Every other text element, including subheadings and section labels, uses the sans. Introducing serif at body or label scale breaks the register contrast.
+**The Condensed Heading Rule.** Barlow Condensed is a performance instrument. It appears only on the two largest headings (Display and Headline) in uppercase — the places where scale and compression amplify meaning. Every other text element, including subheadings and section labels, uses the sans. Introducing condensed at body or label scale breaks the register contrast.
 
 **The Tracked Label Rule.** Every UI label, metadata string, or button text uses `letter-spacing: 0.12–0.16em` and `text-transform: uppercase`. This creates a consistent secondary voice across the entire interface. Copy that is instructional or conversational never uses tracking.
 

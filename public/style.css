@@ -13,7 +13,7 @@
   --shadow: rgba(0, 0, 0, 0.4);
   --error: #d08070;
   --status: #7ab870;
-  --serif: "Iowan Old Style", "Georgia", "Times New Roman", serif;
+  --display: "Barlow Condensed", "Arial Narrow", sans-serif;
   --sans: "Helvetica Neue", "Segoe UI", sans-serif;
 }
 
@@ -200,11 +200,12 @@ input:disabled {
 
 .brief-panel h2 {
   margin: 22px 0 18px;
-  font-family: var(--serif);
-  font-size: clamp(2rem, 3vw, 2.7rem);
-  font-weight: 500;
-  line-height: 1.15;
-  letter-spacing: -0.05em;
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 3.2vw, 3rem);
+  font-weight: 600;
+  line-height: 1.05;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
   text-wrap: balance;
 }
 
@@ -246,11 +247,12 @@ input:disabled {
 
 .hero h1 {
   margin: 0 0 14px;
-  font-family: var(--serif);
-  font-size: clamp(3.2rem, 6vw, 6rem);
-  font-weight: 500;
-  line-height: 0.92;
-  letter-spacing: -0.07em;
+  font-family: var(--display);
+  font-size: clamp(4rem, 7.5vw, 7.5rem);
+  font-weight: 700;
+  line-height: 0.9;
+  letter-spacing: 0.01em;
+  text-transform: uppercase;
   text-wrap: balance;
 }
 
@@ -482,7 +484,7 @@ input:disabled {
   }
 
   .hero h1 {
-    font-size: 2.8rem;
+    font-size: 3.4rem;
   }
 
   .quick-prompts {

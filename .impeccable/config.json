@@ -11,6 +11,11 @@
         ],
         "createdAt": "2026-11-01T13:43:18.448Z",
         "reason": "remaining findings are .msg.pending opacity:0.72 (intentional in-progress signal) and placeholder text (WCAG 2.1 exempts inactive UI; opacity raised from 0.45/0.5 to 0.6/0.65)"
+      },
+      {
+        "rule": "design-system-font",
+        "value": "barlow condensed",
+        "createdAt": "2026-11-01T16:25:56.360Z"
       }
     ]
   }
