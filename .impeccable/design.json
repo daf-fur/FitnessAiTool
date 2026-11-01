@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-01T00:00:00Z",
+  "title": "Design System: Fitness Agent",
+  "extensions": {
+    "colorMeta": {
+      "morning-sky-blue": {
+        "role": "primary",
+        "displayName": "Morning Sky Blue",
+        "canonical": "#e8f0fe",
+        "tonalRamp": ["#1c2d4a", "#2c4778", "#3d619a", "#5579b4", "#7a97cc", "#a5bce0", "#c8d8f0", "#e8f0fe"]
+      },
+      "chalk-surface": {
+        "role": "neutral",
+        "displayName": "Chalk Surface",
+        "canonical": "#f1f1f1",
+        "tonalRamp": ["#1a1a1a", "#333333", "#4d4d4d", "#666666", "#808080", "#999999", "#cccccc", "#f1f1f1"]
+      },
+      "faded-steel": {
+        "role": "neutral",
+        "displayName": "Faded Steel",
+        "canonical": "#888888",
+        "tonalRamp": ["#111111", "#2a2a2a", "#444444", "#666666", "#888888", "#aaaaaa", "#cccccc", "#eeeeee"]
+      }
+    },
+    "typographyMeta": {
+      "body": {
+        "displayName": "Body",
+        "purpose": "All text in the UI — messages, input, labels. Single scale, no ramp."
+      }
+    },
+    "shadows": [],
+    "motion": [
+      {
+        "name": "scroll-smooth",
+        "value": "scrollIntoView({ behavior: 'smooth' })",
+        "purpose": "New message scroll — the only motion in the system."
+      }
+    ],
+    "breakpoints": []
+  },
+  "components": [
+    {
+      "name": "User Message Bubble",
+      "kind": "custom",
+      "refersTo": "msg-user",
+      "description": "Speaker-coded surface for user messages. Right-aligned, Morning Sky Blue.",
+      "html": "<div class=\"ds-msg ds-msg-user\">Give me some chest exercises</div>",
+      "css": ".ds-msg { margin: 0.5rem 0; padding: 0.5rem 0.75rem; border-radius: 6px; white-space: pre-wrap; font-family: sans-serif; font-size: 1rem; line-height: 1.5; } .ds-msg-user { background: #e8f0fe; text-align: right; }"
+    },
+    {
+      "name": "Assistant Message Bubble",
+      "kind": "custom",
+      "refersTo": "msg-assistant",
+      "description": "Speaker-coded surface for assistant replies. Left-aligned, Chalk Surface.",
+      "html": "<div class=\"ds-msg ds-msg-assistant\">Try 3 sets of bench press, dumbbell flyes, and push-ups for a full chest session.</div>",
+      "css": ".ds-msg { margin: 0.5rem 0; padding: 0.5rem 0.75rem; border-radius: 6px; white-space: pre-wrap; font-family: sans-serif; font-size: 1rem; line-height: 1.5; } .ds-msg-assistant { background: #f1f1f1; }"
+    },
+    {
+      "name": "Pending Message",
+      "kind": "custom",
+      "refersTo": "msg-assistant",
+      "description": "In-progress state. Same bubble as assistant, italic Faded Steel text.",
+      "html": "<div class=\"ds-msg ds-msg-pending\">Thinking...</div>",
+      "css": ".ds-msg { margin: 0.5rem 0; padding: 0.5rem 0.75rem; border-radius: 6px; white-space: pre-wrap; font-family: sans-serif; font-size: 1rem; line-height: 1.5; } .ds-msg-pending { background: #f1f1f1; color: #888; font-style: italic; }"
+    },
+    {
+      "name": "Chat Input Row",
+      "kind": "input",
+      "description": "Flex row containing the text input and Send button. Input fills available width.",
+      "html": "<form class=\"ds-chat-form\"><input class=\"ds-input-text\" type=\"text\" placeholder=\"give me some chest exercises\"><button class=\"ds-btn-send\" type=\"submit\">Send</button></form>",
+      "css": ".ds-chat-form { display: flex; gap: 0.5rem; margin: 1rem 0 0.5rem; } .ds-input-text { flex: 1; padding: 0.5rem; font-family: sans-serif; font-size: 1rem; } .ds-input-text:focus { outline-offset: 2px; } .ds-btn-send { padding: 0.4rem 0.75rem; font-family: sans-serif; font-size: 1rem; cursor: pointer; } .ds-btn-send:hover { opacity: 0.85; } .ds-btn-send:focus-visible { outline-offset: 2px; }"
+    },
+    {
+      "name": "Reset Button",
+      "kind": "button",
+      "description": "Secondary action below the form. Browser-default styling; no visual weight.",
+      "html": "<button class=\"ds-btn-reset\" type=\"button\">Reset conversation</button>",
+      "css": ".ds-btn-reset { font-family: sans-serif; font-size: 1rem; cursor: pointer; padding: 0; background: none; border: none; text-decoration: underline; color: inherit; } .ds-btn-reset:hover { opacity: 0.7; } .ds-btn-reset:focus-visible { outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Training Journal",
+    "overview": "The Fitness Agent UI is a purposeful tool built around one idea: the conversation is the interface. There is no chrome to navigate, no sidebar to manage, no dashboard to interpret — just a clean exchange between the user and their fitness coach. The design serves this by removing itself: a centered, narrow column, quiet neutral bubbles, and a persistent input at the bottom.\n\nDensity is low by intention. Message bubbles breathe with comfortable padding, the form sits close to the content without crowding it, and nothing competes for attention beyond the words on screen. The aesthetic is closer to a well-kept training notebook than a gym app — reliable, efficient, and devoid of motivational noise.\n\nThe restrained visual register is not austerity for its own sake. It signals that the product trusts its content. The coach's voice, the user's questions, and the exercise data are the substance; the UI is the container.",
+    "keyCharacteristics": [
+      "Single-column, conversation-first layout",
+      "Color used only to distinguish speaker roles, never decoratively",
+      "Flat, zero-elevation system",
+      "Refined and restrained interactive controls",
+      "No visual hierarchy beyond the chat exchange itself"
+    ],
+    "rules": [
+      {
+        "name": "The Two-Surface Rule",
+        "body": "The palette holds two speaker surfaces and one muted state. Introducing a third accent or decorating beyond role-coding breaks the system's distinguishing logic.",
+        "section": "colors"
+      },
+      {
+        "name": "The Single-Scale Rule",
+        "body": "One text size, one stack. The heading (h2) is the sole exception, using the browser default. Any new element should fit this level without introduction of a display size or secondary font.",
+        "section": "typography"
+      },
+      {
+        "name": "The Zero-Shadow Rule",
+        "body": "Shadows are not part of this system. If a future component requires perceived depth, reach for a slightly darker background tint — never a shadow.",
+        "section": "elevation"
+      },
+      {
+        "name": "The One-Radius Rule",
+        "body": "6px is the only custom radius value. Do not introduce 0 (sharp) or larger values (12px+) without a specific functional reason.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do use only the two speaker-role surfaces — Morning Sky Blue for user messages, Chalk Surface for assistant messages — as the sole color differentiation.",
+      "Do keep the content area at or below 700px wide, centered with auto margins.",
+      "Do use italic + Faded Steel (#888) only for the pending/loading state — keep the same size.",
+      "Do let new messages scroll smoothly into view with scrollIntoView({ behavior: 'smooth' }).",
+      "Do rely on flex: 1 for the input to naturally share space with the button at any container width."
+    ],
+    "donts": [
+      "Don't introduce custom shadow values anywhere — this is a zero-elevation system.",
+      "Don't add a second typeface, a display heading size, or any text-size ramp beyond the single body scale.",
+      "Don't apply Morning Sky Blue or Chalk Surface outside their speaker-role context — they are semantic, not decorative.",
+      "Don't override button padding, radius, or background-color beyond browser defaults; the restraint is deliberate.",
+      "Don't introduce a third accent color. The Two-Surface Rule is load-bearing."
+    ]
+  }
+}
