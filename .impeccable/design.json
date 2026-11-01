@@ -4,126 +4,142 @@
   "title": "Design System: Fitness Agent",
   "extensions": {
     "colorMeta": {
-      "morning-sky-blue": {
-        "role": "primary",
-        "displayName": "Morning Sky Blue",
-        "canonical": "#e8f0fe",
-        "tonalRamp": ["#1c2d4a", "#2c4778", "#3d619a", "#5579b4", "#7a97cc", "#a5bce0", "#c8d8f0", "#e8f0fe"]
-      },
-      "chalk-surface": {
-        "role": "neutral",
-        "displayName": "Chalk Surface",
-        "canonical": "#f1f1f1",
-        "tonalRamp": ["#1a1a1a", "#333333", "#4d4d4d", "#666666", "#808080", "#999999", "#cccccc", "#f1f1f1"]
-      },
-      "faded-steel": {
-        "role": "neutral",
-        "displayName": "Faded Steel",
-        "canonical": "#888888",
-        "tonalRamp": ["#111111", "#2a2a2a", "#444444", "#666666", "#888888", "#aaaaaa", "#cccccc", "#eeeeee"]
-      }
+      "training-paper":    { "role": "neutral",   "displayName": "Training Paper",    "canonical": "#f4efe9", "tonalRamp": ["#2a1f14", "#4a3828", "#6b5240", "#8c6e58", "#a88a72", "#c4a892", "#dcc8b6", "#f4efe9"] },
+      "canvas-strong":     { "role": "neutral",   "displayName": "Canvas Strong",     "canonical": "#ece2d5", "tonalRamp": ["#2a1f14", "#4a3828", "#6b5240", "#8c6e58", "#a88a72", "#c4a892", "#d8c8b4", "#ece2d5"] },
+      "chalk-white":       { "role": "neutral",   "displayName": "Chalk White",       "canonical": "#f9f5f1", "tonalRamp": ["#2a1f14", "#4a3828", "#6b5240", "#8c6e58", "#a88a72", "#c8b8a4", "#e4d8c8", "#f9f5f1"] },
+      "chalk-strong":      { "role": "neutral",   "displayName": "Chalk Strong",      "canonical": "#efe4d5", "tonalRamp": ["#2a1f14", "#4a3828", "#6b5240", "#8c6e58", "#a88a72", "#c4a892", "#d8c4a8", "#efe4d5"] },
+      "field-notes-black": { "role": "neutral",   "displayName": "Field Notes Black", "canonical": "#1f1d1a", "tonalRamp": ["#1f1d1a", "#3a3530", "#555048", "#706860", "#8c8078", "#a89890", "#c4b8b0", "#e0d8d0"] },
+      "worn-suede":        { "role": "neutral",   "displayName": "Worn Suede",        "canonical": "#615b55", "tonalRamp": ["#1f1c18", "#333028", "#4a4640", "#615b55", "#7d7870", "#9a948e", "#b8b2ac", "#d5d0ca"] },
+      "pressed-linen":     { "role": "neutral",   "displayName": "Pressed Linen",     "canonical": "#d7c9b7", "tonalRamp": ["#3a2e20", "#5a4c38", "#7a6858", "#9a8878", "#b4a090", "#c8b8a4", "#d7c9b7", "#eee8e0"] },
+      "field-sage":        { "role": "primary",   "displayName": "Field Sage",        "canonical": "#546b52", "tonalRamp": ["#1a2818", "#2c4028", "#3f553f", "#546b52", "#6e8a6a", "#90a88c", "#b4c8b0", "#d8e4d4"] },
+      "deep-forest":       { "role": "primary",   "displayName": "Deep Forest",       "canonical": "#3f553f", "tonalRamp": ["#142014", "#243828", "#3f553f", "#546b52", "#6e8a6a", "#90a88c", "#b4c8b0", "#d8e4d4"] },
+      "sage-whisper":      { "role": "secondary", "displayName": "Sage Whisper",      "canonical": "#e4ebdf", "tonalRamp": ["#1a2818", "#2c4028", "#3f553f", "#6e8a6a", "#9ab898", "#bcd4ba", "#d4e8d0", "#e4ebdf"] },
+      "terracotta":        { "role": "neutral",   "displayName": "Terracotta",        "canonical": "#8f5147", "tonalRamp": ["#2a1410", "#4a2420", "#6b3830", "#8f5147", "#aa7068", "#c49090", "#dab8b4", "#f0dcd8"] },
+      "signal-green":      { "role": "secondary", "displayName": "Signal Green",      "canonical": "#738c67", "tonalRamp": ["#1a2818", "#2c4028", "#4a6044", "#738c67", "#90a888", "#b0c4ac", "#ccdac8", "#e4eee0"] }
     },
     "typographyMeta": {
-      "body": {
-        "displayName": "Body",
-        "purpose": "All text in the UI — messages, input, labels. Single scale, no ramp."
-      }
+      "display":  { "displayName": "Display",  "purpose": "Hero heading only — one instance per page." },
+      "headline": { "displayName": "Headline", "purpose": "Brief panel h2 only." },
+      "body":     { "displayName": "Body",     "purpose": "Messages, lead text, helper copy, input." },
+      "label":    { "displayName": "Label",    "purpose": "All metadata, section headers, button text, eyebrows — always uppercase + tracked." }
     },
-    "shadows": [],
-    "motion": [
-      {
-        "name": "scroll-smooth",
-        "value": "scrollIntoView({ behavior: 'smooth' })",
-        "purpose": "New message scroll — the only motion in the system."
-      }
+    "shadows": [
+      { "name": "panel-ambient",   "value": "0 4px 18px rgba(31, 29, 26, 0.07)",    "purpose": "Brief sidebar — wide, low-opacity lift." },
+      { "name": "panel-prominent", "value": "0 8px 24px rgba(31, 29, 26, 0.07)",    "purpose": "Conversation panel — slightly taller, primary surface." },
+      { "name": "msg-micro",       "value": "0 2px 8px rgba(31, 29, 26, 0.02)",     "purpose": "Message bubbles — barely perceptible lift." },
+      { "name": "send-default",    "value": "0 8px 18px rgba(84, 107, 82, 0.12)",   "purpose": "Send button — green-tinted, connects color to depth." },
+      { "name": "send-hover",      "value": "0 10px 20px rgba(84, 107, 82, 0.18)",  "purpose": "Send button hover — intensified." },
+      { "name": "chip-hover",      "value": "0 4px 10px rgba(31, 29, 26, 0.04)",    "purpose": "Prompt chip hover — micro lift." },
+      { "name": "signal-ring",     "value": "0 0 0 3px rgba(115, 140, 103, 0.12)", "purpose": "Signal dot — soft glow ring." }
     ],
-    "breakpoints": []
+    "motion": [
+      { "name": "control-transition",  "value": "0.2s ease",     "purpose": "Send button, reset button background and transform." },
+      { "name": "chip-transition",     "value": "0.18s ease-out", "purpose": "Prompt chip lift, border, background, shadow." },
+      { "name": "thinking-cycle",      "value": "1200ms interval", "purpose": "Pending message text cycles through thinking strings." },
+      { "name": "reduced-motion",      "value": "prefers-reduced-motion: reduce → 0.01ms all transitions", "purpose": "Accessibility override." }
+    ],
+    "breakpoints": [
+      { "name": "tablet", "value": "820px", "purpose": "Workspace stacks to single column; brief panel moves below content." },
+      { "name": "mobile", "value": "640px", "purpose": "Container tightens, brand tag hides, profile label hides, hero h1 reduces to 2.8rem." }
+    ]
   },
   "components": [
     {
       "name": "User Message Bubble",
       "kind": "custom",
       "refersTo": "msg-user",
-      "description": "Speaker-coded surface for user messages. Right-aligned, Morning Sky Blue.",
-      "html": "<div class=\"ds-msg ds-msg-user\">Give me some chest exercises</div>",
-      "css": ".ds-msg { margin: 0.5rem 0; padding: 0.5rem 0.75rem; border-radius: 6px; white-space: pre-wrap; font-family: sans-serif; font-size: 1rem; line-height: 1.5; } .ds-msg-user { background: #e8f0fe; text-align: right; }"
+      "description": "Right-aligned speaker bubble in Sage Whisper with a Field Sage border tint.",
+      "html": "<div class=\"ds-msg ds-msg-user\">Build me a strength-focused push day</div>",
+      "css": ".ds-msg { max-width: min(760px, 84%); padding: 15px 18px; border: 1px solid #d7c9b7; border-radius: 14px; white-space: pre-wrap; line-height: 1.7; font-family: 'Helvetica Neue', 'Segoe UI', sans-serif; font-size: 1rem; color: #1f1d1a; box-shadow: 0 2px 8px rgba(31,29,26,0.02); } .ds-msg-user { align-self: flex-end; background: #e4ebdf; border-color: rgba(84,107,82,0.2); }"
     },
     {
       "name": "Assistant Message Bubble",
       "kind": "custom",
       "refersTo": "msg-assistant",
-      "description": "Speaker-coded surface for assistant replies. Left-aligned, Chalk Surface.",
-      "html": "<div class=\"ds-msg ds-msg-assistant\">Try 3 sets of bench press, dumbbell flyes, and push-ups for a full chest session.</div>",
-      "css": ".ds-msg { margin: 0.5rem 0; padding: 0.5rem 0.75rem; border-radius: 6px; white-space: pre-wrap; font-family: sans-serif; font-size: 1rem; line-height: 1.5; } .ds-msg-assistant { background: #f1f1f1; }"
+      "description": "Left-aligned speaker bubble in translucent white.",
+      "html": "<div class=\"ds-msg ds-msg-assistant\">Here's a push day: bench press, overhead press, dips, and lateral raises — 4 sets each, 6–8 reps for the compounds.</div>",
+      "css": ".ds-msg { max-width: min(760px, 84%); padding: 15px 18px; border: 1px solid #d7c9b7; border-radius: 14px; white-space: pre-wrap; line-height: 1.7; font-family: 'Helvetica Neue', 'Segoe UI', sans-serif; font-size: 1rem; color: #1f1d1a; box-shadow: 0 2px 8px rgba(31,29,26,0.02); } .ds-msg-assistant { align-self: flex-start; background: rgba(255,255,255,0.4); }"
     },
     {
       "name": "Pending Message",
       "kind": "custom",
-      "refersTo": "msg-assistant",
-      "description": "In-progress state. Same bubble as assistant, italic Faded Steel text.",
-      "html": "<div class=\"ds-msg ds-msg-pending\">Thinking...</div>",
-      "css": ".ds-msg { margin: 0.5rem 0; padding: 0.5rem 0.75rem; border-radius: 6px; white-space: pre-wrap; font-family: sans-serif; font-size: 1rem; line-height: 1.5; } .ds-msg-pending { background: #f1f1f1; color: #888; font-style: italic; }"
+      "description": "In-progress state — assistant bubble with dashed border and reduced opacity.",
+      "html": "<div class=\"ds-msg ds-msg-pending\">Checking the exercise library…</div>",
+      "css": ".ds-msg { max-width: min(760px, 84%); padding: 15px 18px; border: 1px solid #d7c9b7; border-radius: 14px; white-space: pre-wrap; line-height: 1.7; font-family: 'Helvetica Neue', 'Segoe UI', sans-serif; font-size: 1rem; color: #1f1d1a; box-shadow: 0 2px 8px rgba(31,29,26,0.02); } .ds-msg-pending { background: rgba(255,255,255,0.4); opacity: 0.72; border-style: dashed; }"
     },
     {
-      "name": "Chat Input Row",
-      "kind": "input",
-      "description": "Flex row containing the text input and Send button. Input fills available width.",
-      "html": "<form class=\"ds-chat-form\"><input class=\"ds-input-text\" type=\"text\" placeholder=\"give me some chest exercises\"><button class=\"ds-btn-send\" type=\"submit\">Send</button></form>",
-      "css": ".ds-chat-form { display: flex; gap: 0.5rem; margin: 1rem 0 0.5rem; } .ds-input-text { flex: 1; padding: 0.5rem; font-family: sans-serif; font-size: 1rem; } .ds-input-text:focus { outline-offset: 2px; } .ds-btn-send { padding: 0.4rem 0.75rem; font-family: sans-serif; font-size: 1rem; cursor: pointer; } .ds-btn-send:hover { opacity: 0.85; } .ds-btn-send:focus-visible { outline-offset: 2px; }"
+      "name": "Error Message",
+      "kind": "custom",
+      "description": "Failure state bubble in Terracotta tint.",
+      "html": "<div class=\"ds-msg ds-msg-error\">Request failed: network error</div>",
+      "css": ".ds-msg { max-width: min(760px, 84%); padding: 15px 18px; border-radius: 14px; white-space: pre-wrap; line-height: 1.7; font-family: 'Helvetica Neue', 'Segoe UI', sans-serif; font-size: 1rem; } .ds-msg-error { border: 1px solid rgba(143,81,71,0.25); background: rgba(143,81,71,0.04); color: #8f5147; }"
+    },
+    {
+      "name": "Send Button",
+      "kind": "button",
+      "refersTo": "button-send",
+      "description": "Primary CTA. Filled Field Sage pill with uppercase tracked label and green shadow.",
+      "html": "<button class=\"ds-btn-send\" type=\"submit\">Send</button>",
+      "css": ".ds-btn-send { min-width: 110px; border: 0; border-radius: 999px; background: #546b52; color: white; padding: 12px 18px; font-family: 'Helvetica Neue', 'Segoe UI', sans-serif; font-size: 0.72rem; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease; box-shadow: 0 8px 18px rgba(84,107,82,0.12); } .ds-btn-send:hover { background: #3f553f; transform: translateY(-1px); box-shadow: 0 10px 20px rgba(84,107,82,0.18); } .ds-btn-send:focus-visible { outline: 2px solid #546b52; outline-offset: 3px; } .ds-btn-send:disabled { cursor: wait; opacity: 0.7; }"
     },
     {
       "name": "Reset Button",
       "kind": "button",
-      "description": "Secondary action below the form. Browser-default styling; no visual weight.",
-      "html": "<button class=\"ds-btn-reset\" type=\"button\">Reset conversation</button>",
-      "css": ".ds-btn-reset { font-family: sans-serif; font-size: 1rem; cursor: pointer; padding: 0; background: none; border: none; text-decoration: underline; color: inherit; } .ds-btn-reset:hover { opacity: 0.7; } .ds-btn-reset:focus-visible { outline-offset: 2px; }"
+      "refersTo": "button-reset",
+      "description": "Ghost pill. Pressed Linen border, transparent background, hover reveals Field Sage accent.",
+      "html": "<button class=\"ds-btn-reset\" type=\"button\">Reset</button>",
+      "css": ".ds-btn-reset { border: 1px solid #d7c9b7; background: transparent; color: #1f1d1a; padding: 9px 14px; border-radius: 999px; font-family: 'Helvetica Neue', 'Segoe UI', sans-serif; font-size: 0.78rem; letter-spacing: 0.12em; text-transform: uppercase; cursor: pointer; transition: border-color 0.2s ease, background-color 0.2s ease; } .ds-btn-reset:hover { border-color: #546b52; background: rgba(84,107,82,0.04); } .ds-btn-reset:focus-visible { outline: 2px solid #546b52; outline-offset: 3px; }"
+    },
+    {
+      "name": "Prompt Chip",
+      "kind": "button",
+      "refersTo": "prompt-chip",
+      "description": "Ghost pill quick-prompt. Subtle white tint, lifts 1px on hover toward Field Sage.",
+      "html": "<button class=\"ds-prompt-chip\" type=\"button\">Push day</button>",
+      "css": ".ds-prompt-chip { border: 1px solid #d7c9b7; background: rgba(255,255,255,0.18); color: #1f1d1a; border-radius: 999px; padding: 10px 16px; font-family: 'Helvetica Neue', 'Segoe UI', sans-serif; font-size: 0.88rem; cursor: pointer; transition: transform 0.18s ease-out, border-color 0.18s ease-out, background 0.18s ease-out, box-shadow 0.18s ease-out; } .ds-prompt-chip:hover { transform: translateY(-1px); border-color: rgba(84,107,82,0.45); background: rgba(84,107,82,0.04); box-shadow: 0 4px 10px rgba(31,29,26,0.04); } .ds-prompt-chip:focus-visible { outline: 2px solid #546b52; outline-offset: 3px; }"
+    },
+    {
+      "name": "Brand Mark",
+      "kind": "custom",
+      "description": "34×34px square mark. 8px radius, Field Sage border and tint, Deep Forest text.",
+      "html": "<span class=\"ds-brand-mark\">F</span>",
+      "css": ".ds-brand-mark { display: grid; place-items: center; width: 34px; height: 34px; border: 1px solid rgba(84,107,82,0.4); border-radius: 8px; background: rgba(84,107,82,0.07); color: #3f553f; font-family: 'Helvetica Neue', 'Segoe UI', sans-serif; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; }"
     }
   ],
   "narrative": {
-    "northStar": "The Training Journal",
-    "overview": "The Fitness Agent UI is a purposeful tool built around one idea: the conversation is the interface. There is no chrome to navigate, no sidebar to manage, no dashboard to interpret — just a clean exchange between the user and their fitness coach. The design serves this by removing itself: a centered, narrow column, quiet neutral bubbles, and a persistent input at the bottom.\n\nDensity is low by intention. Message bubbles breathe with comfortable padding, the form sits close to the content without crowding it, and nothing competes for attention beyond the words on screen. The aesthetic is closer to a well-kept training notebook than a gym app — reliable, efficient, and devoid of motivational noise.\n\nThe restrained visual register is not austerity for its own sake. It signals that the product trusts its content. The coach's voice, the user's questions, and the exercise data are the substance; the UI is the container.",
+    "northStar": "The Field Notes",
+    "overview": "The Fitness Agent is built on the aesthetic of a well-kept training notebook: warm paper, reliable ink, sparing use of a muted green accent that feels more field than gym. The visual language draws from analog tools — the parchment warmth of the background, the tight-tracked uppercase labels of a form sheet, the serif typography that appears only for editorial moments — while staying fully functional as a modern web application.\n\nThe key tension the design resolves: a fitness tool should feel capable without feeling clinical. This system achieves that through material warmth (the earthy palette), editorial authority (the serif display type), and restraint in decoration (Field Sage appears on fewer than three elements per screen). The result is a surface that a user would feel comfortable spending focused time inside — not a dashboard to check, but a desk to sit at.\n\nDensity is medium. Panels are generous but bounded. The two-column workspace gives the brief sidebar and conversation panel distinct territories without crowding either.",
     "keyCharacteristics": [
-      "Single-column, conversation-first layout",
-      "Color used only to distinguish speaker roles, never decoratively",
-      "Flat, zero-elevation system",
-      "Refined and restrained interactive controls",
-      "No visual hierarchy beyond the chat exchange itself"
+      "Warm earthy palette rooted in organic neutrals, not corporate blue",
+      "Serif used only at editorial scale — hero heading and brief panel title",
+      "Field Sage accent is scarce: brand mark, hero span, send button only",
+      "Structural shadows signal hierarchy; they are warm, not cool",
+      "Pill radius for interactive controls; panel radius for containers; never mixed",
+      "Uppercase tracked labels form a secondary typographic register across all metadata"
     ],
     "rules": [
-      {
-        "name": "The Two-Surface Rule",
-        "body": "The palette holds two speaker surfaces and one muted state. Introducing a third accent or decorating beyond role-coding breaks the system's distinguishing logic.",
-        "section": "colors"
-      },
-      {
-        "name": "The Single-Scale Rule",
-        "body": "One text size, one stack. The heading (h2) is the sole exception, using the browser default. Any new element should fit this level without introduction of a display size or secondary font.",
-        "section": "typography"
-      },
-      {
-        "name": "The Zero-Shadow Rule",
-        "body": "Shadows are not part of this system. If a future component requires perceived depth, reach for a slightly darker background tint — never a shadow.",
-        "section": "elevation"
-      },
-      {
-        "name": "The One-Radius Rule",
-        "body": "6px is the only custom radius value. Do not introduce 0 (sharp) or larger values (12px+) without a specific functional reason.",
-        "section": "shapes"
-      }
+      { "name": "The One Accent Rule",       "body": "Field Sage appears on the send button, the brand mark, and the hero h1 accent span — three placements. Adding a fourth is a system violation.",                                                                 "section": "colors" },
+      { "name": "The No-Cool-Neutral Rule",  "body": "Every gray in this system has a warm undertone. Do not substitute a neutral gray (#888, #ccc, #f5f5f5) — the warmth is load-bearing.",                                                                        "section": "colors" },
+      { "name": "The Field Notes Rule",      "body": "Serif is an editorial instrument. It appears only on the two largest headings (Display and Headline). Every other element uses the sans.",                                                                    "section": "typography" },
+      { "name": "The Tracked Label Rule",    "body": "Every UI label, metadata string, or button text uses letter-spacing: 0.12–0.16em and text-transform: uppercase. Conversational text never uses tracking.",                                                    "section": "typography" },
+      { "name": "The Warm Shadow Rule",      "body": "Every shadow is tinted warm (rgba(31, 29, 26, ...)) or olive-green for the send button. A cool-gray shadow reads as a different product.",                                                                    "section": "elevation" },
+      { "name": "The Radius Assignment Rule","body": "Containers use 14px (bubble) or 18px (panel). Controls use 999px (pill). Brand mark uses 8px. Do not round a container to 999px or make a button 18px.",                                                     "section": "shapes" }
     ],
     "dos": [
-      "Do use only the two speaker-role surfaces — Morning Sky Blue for user messages, Chalk Surface for assistant messages — as the sole color differentiation.",
-      "Do keep the content area at or below 700px wide, centered with auto margins.",
-      "Do use italic + Faded Steel (#888) only for the pending/loading state — keep the same size.",
-      "Do let new messages scroll smoothly into view with scrollIntoView({ behavior: 'smooth' }).",
-      "Do rely on flex: 1 for the input to naturally share space with the button at any container width."
+      "Do use Iowan Old Style only for the Display heading and the Headline brief title.",
+      "Do reserve Field Sage for its three designated placements: send button, brand mark, hero h1 accent span.",
+      "Do keep all borders and dividers in Pressed Linen (#d7c9b7) — the line color is a system-wide invariant.",
+      "Do tint all shadows warm (rgba(31, 29, 26, ...)) or olive-green for the send button.",
+      "Do use pill radius (999px) for interactive controls and panel radius (18px) for containers.",
+      "Do apply the uppercase tracked label register to all metadata, labels, eyebrows, and button text."
     ],
     "donts": [
-      "Don't introduce custom shadow values anywhere — this is a zero-elevation system.",
-      "Don't add a second typeface, a display heading size, or any text-size ramp beyond the single body scale.",
-      "Don't apply Morning Sky Blue or Chalk Surface outside their speaker-role context — they are semantic, not decorative.",
-      "Don't override button padding, radius, or background-color beyond browser defaults; the restraint is deliberate.",
-      "Don't introduce a third accent color. The Two-Surface Rule is load-bearing."
+      "Don't introduce a pure white (#ffffff) background or a neutral gray — the warmth is the system's material identity.",
+      "Don't use a cool-tinted or pure-black shadow — it reads as a foreign component.",
+      "Don't use the serif font below Headline scale.",
+      "Don't add a fourth accent placement beyond the three specified.",
+      "Don't apply border-radius: 18px to interactive controls or 999px to containers.",
+      "Don't add uppercase tracking to conversational or instructional text."
     ]
   }
 }
