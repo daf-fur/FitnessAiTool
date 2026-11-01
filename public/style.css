@@ -34,6 +34,13 @@ body {
     var(--bg);
   color: var(--ink);
   font-family: var(--sans);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--accent-soft);
+  color: var(--ink);
 }
 
 button, input {
@@ -113,8 +120,9 @@ input:disabled {
 
 .brand-tag {
   color: var(--muted);
-  font-size: 0.64rem;
+  font-size: 0.75rem;
   letter-spacing: 0.12em;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
@@ -129,8 +137,9 @@ input:disabled {
   align-items: center;
   gap: 10px;
   color: var(--muted);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   letter-spacing: 0.12em;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
@@ -147,7 +156,7 @@ input:disabled {
 }
 
 .profile-field input::placeholder {
-  color: rgba(31, 29, 26, 0.45);
+  color: rgba(31, 29, 26, 0.6);
 }
 
 .reset-button {
@@ -184,8 +193,9 @@ input:disabled {
   justify-content: space-between;
   gap: 12px;
   color: var(--muted);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   letter-spacing: 0.14em;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
@@ -194,7 +204,9 @@ input:disabled {
   font-family: var(--serif);
   font-size: clamp(2rem, 3vw, 2.7rem);
   font-weight: 500;
+  line-height: 1.15;
   letter-spacing: -0.05em;
+  text-wrap: balance;
 }
 
 .brief-list {
@@ -213,8 +225,9 @@ input:disabled {
 
 .brief-list span {
   color: var(--muted);
-  font-size: 0.66rem;
+  font-size: 0.75rem;
   letter-spacing: 0.12em;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
@@ -232,21 +245,14 @@ input:disabled {
   border-bottom: 1px solid var(--line);
 }
 
-.eyebrow {
-  color: var(--muted);
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-}
-
 .hero h1 {
-  margin: 24px 0 14px;
+  margin: 0 0 14px;
   font-family: var(--serif);
   font-size: clamp(3.2rem, 6vw, 6rem);
   font-weight: 500;
   line-height: 0.92;
   letter-spacing: -0.07em;
+  text-wrap: balance;
 }
 
 .hero h1 span {
@@ -259,7 +265,8 @@ input:disabled {
   margin: 0;
   color: var(--muted);
   font-size: 1.05rem;
-  line-height: 1.65;
+  line-height: 1.7;
+  text-wrap: pretty;
 }
 
 .quick-prompts {
@@ -301,8 +308,9 @@ input:disabled {
   padding: 15px 18px;
   border-bottom: 1px solid var(--line);
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.75rem;
   letter-spacing: 0.12em;
+  line-height: 1.2;
   text-transform: uppercase;
 }
 
@@ -337,6 +345,7 @@ input:disabled {
   border-radius: 14px;
   white-space: pre-wrap;
   line-height: 1.7;
+  text-wrap: pretty;
   box-shadow: 0 2px 8px rgba(31, 29, 26, 0.02);
 }
 
@@ -387,7 +396,7 @@ input:disabled {
 }
 
 #input::placeholder {
-  color: rgba(31, 29, 26, 0.5);
+  color: rgba(31, 29, 26, 0.65);
 }
 
 .send-button {
@@ -397,7 +406,7 @@ input:disabled {
   background: var(--accent);
   color: white;
   padding: 12px 18px;
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
@@ -414,8 +423,9 @@ input:disabled {
   width: min(1200px, calc(100% - 30px));
   margin: 10px auto 32px;
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.75rem;
   letter-spacing: 0.04em;
+  text-wrap: pretty;
 }
 
 .sr-only {
@@ -457,7 +467,7 @@ input:disabled {
 
   .brand-name {
     letter-spacing: 0.1em;
-    font-size: 0.68rem;
+    font-size: 0.75rem;
   }
 
   .brand-tag {
