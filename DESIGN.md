@@ -60,6 +60,7 @@ components:
   button-send:
     backgroundColor: "{colors.field-sage}"
     textColor: "#ffffff"
+    note: "white on field-sage = 5.8:1 WCAG AA ✓"
     rounded: "{rounded.pill}"
     padding: "12px 18px"
   button-send-hover:
@@ -80,19 +81,19 @@ components:
 
 ## Overview
 
-**Creative North Star: "Chalk & Carbon"**
+**Creative North Star: "Field Notes"**
 
-The Fitness Agent is built on the aesthetic of a dark, focused training environment: deep carbon backgrounds, warm earthy ink, and a single muted green accent that reads as field, not gym. The visual language draws from analog athletic tools — the scoreboard compression of condensed uppercase headings, the tight-tracked labels of a form sheet, the restraint of a single accent colour — while staying fully functional as a modern web application.
+The Fitness Agent is built on the aesthetic of a well-kept training notebook: warm paper backgrounds, reliable near-black ink, and a single muted green accent that reads as field, not gym. The visual language draws from analog athletic tools — the scoreboard compression of condensed uppercase headings, the tight-tracked labels of a form sheet, the restraint of a single accent colour — while staying fully functional as a modern web application.
 
-The key tension the design resolves: a fitness tool should feel capable without feeling clinical. This system achieves that through tonal depth (the dark carbon palette), athletic authority (Barlow Condensed at heading scale), and restraint in decoration (Field Sage appears on fewer than three elements per screen). The result is a surface that a user would feel comfortable spending focused time inside — not a dashboard to check, but a training desk to sit at.
+The key tension the design resolves: a fitness tool should feel capable without feeling clinical. This system achieves that through material warmth (the cream paper palette), athletic authority (Barlow Condensed at heading scale in Field Sage green), and restraint in decoration (Field Sage appears on fewer than four elements per screen). The result is a surface that a user would feel comfortable spending focused time inside — not a dashboard to check, but a training desk to sit at.
 
 Density is medium. Panels are generous but bounded. The two-column workspace gives the brief sidebar and conversation panel distinct territories without crowding either. Every component breathes at `18px` internal padding.
 
 **Key Characteristics:**
-- Dark carbon palette with warm earthy undertones, not cold dark mode
-- Barlow Condensed used only at heading scale — hero h1 and brief panel h2
-- Field Sage accent is scarce: brand mark, hero span, send button only
-- Structural shadows signal hierarchy; they are warm, not cool
+- Warm cream paper palette rooted in organic neutrals, not corporate white
+- Barlow Condensed used only at heading scale — hero h1 and brief panel h2, in Forest green
+- Field Sage accent: send button, brand mark, brief panel h2; hero h1 span in Deep Forest
+- Structural shadows signal hierarchy; they are warm, never cool-gray
 - Pill radius for interactive controls; panel radius for containers; never mixed
 - Uppercase tracked labels form a secondary typographic register across all metadata
 
